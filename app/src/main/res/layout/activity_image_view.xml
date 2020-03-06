@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.dexter007bot.Maps.ImageViewActivity">
+    tools:context="com.example.dexter007bot.ImageViewActivity">
 
     <com.alexvasilkov.gestures.views.GestureFrameLayout
         android:layout_width="match_parent"

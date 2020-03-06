@@ -1,4 +1,4 @@
-package com.example.dexter007bot.Maps;
+package com.example.dexter007bot;
 
 
 import android.graphics.Bitmap;

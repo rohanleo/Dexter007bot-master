@@ -46,12 +46,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.dexter007bot.MainActivity.kml;
+
 public class MapActivity extends AppCompatActivity implements MapEventsReceiver {
 
     private MapView mMap;
 
     private MapEventsOverlay mapEventsOverlay;
-    private KmlDocument kmlDocument;
+    //private KmlDocument kmlDocument;
     private List<GeoPoint> geoPoints;
     private List<Marker> markerList;
     private Polygon polygon;
@@ -78,12 +80,12 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                kmlDocument.mKmlRoot.addOverlay(polygon,kmlDocument);
-                kmlDocument.mKmlRoot.addOverlay(marker,kmlDocument);
+                kml.mKmlRoot.addOverlay(polygon,kml);
+                kml.mKmlRoot.addOverlay(marker,kml);
                 long millis = System.currentTimeMillis();
-                File localFile = kmlDocument.getDefaultPathForAndroid("KML_" + millis + ".kml");
-                Log.d("path",localFile.getAbsolutePath());
-                kmlDocument.saveAsKML(localFile);
+                //File localFile = kmlDocument.getDefaultPathForAndroid("KML_" + millis + ".kml");
+                //Log.d("path",localFile.getAbsolutePath());
+                //kmlDocument.saveAsKML(localFile);
                 Toast.makeText(getApplicationContext(),"Polygon Saved",Toast.LENGTH_SHORT).show();
             }
         });
@@ -169,7 +171,7 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         mMap.setMultiTouchControls(true);
         mMap.setClickable(true);
 
-        kmlDocument = new KmlDocument();
+        //kmlDocument = new KmlDocument();
 
         mapController = (MapController) mMap.getController();
         mapController.setZoom(18.0f);
@@ -268,9 +270,12 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
             marker = new Marker(mMap);
             marker.setPosition(locGeoPoint);
             String s= MainActivity.tempImage;
-            marker.setSnippet(s);
-            CustomInfoWindow ciw = new CustomInfoWindow(R.layout.custom_info_window, mMap, marker, MapActivity.this);
-            marker.setInfoWindow(ciw);
+            if(s!=null) {
+                marker.setSnippet(s);
+                CustomInfoWindow ciw = new CustomInfoWindow(R.layout.custom_info_window, mMap, marker, MapActivity.this);
+                marker.setInfoWindow(ciw);
+            }
+            else marker.setTitle("My Location" + "\n" + locGeoPoint.getLatitude() + "," + locGeoPoint.getLongitude());
         }
         else{
             marker.setPosition(locGeoPoint);

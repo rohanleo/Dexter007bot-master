@@ -9,7 +9,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 
-import com.example.dexter007bot.Maps.ImageViewActivity;
+import com.example.dexter007bot.ImageViewActivity;
 import com.example.dexter007bot.R;
 
 import org.osmdroid.views.MapView;
@@ -54,9 +54,9 @@ public class CustomInfoWindow extends InfoWindow {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                     String fileName = allFiles[i];
-                    String folderName = "Android/data/com.example.dexter007bot/files/";
+                    String folderName = "DextorBot/";
                     if (fileName.contains("jpg")) {
-                        folderName = folderName + "Pictures/"+fileName;
+                        folderName = folderName + "DextorImage/"+fileName;
                         Intent ii = new Intent(context, ImageViewActivity.class);
                         ii.putExtra("url",folderName);
                         context.startActivity(ii);

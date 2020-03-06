@@ -73,9 +73,9 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton save;
     Boolean isOpen =false;
 
-    String mCurrentPhotoPath;
-    public static String tempImage,response=null;
-    private static KmlDocument kml ;
+    static String mCurrentMediaPath;
+    public static String tempImage=null,response=null;
+    public static KmlDocument kml ;
     static File kmlFile;
     String kmlName;
 
@@ -83,35 +83,76 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        fab = findViewById(R.id.floatBtn);
-        img = findViewById(R.id.Image);
-        vid = findViewById(R.id.Video);
-        map = findViewById(R.id.Map);
-        save = findViewById(R.id.save);
+
+        initialize();
+
+        AddDirectory.addDirectory();
+
         isOpen =false;
-        kmlName = generateRandomString() + ".kml";
-        File strDir=Environment.getExternalStoragePublicDirectory("KML");
-        if(!strDir.exists()) strDir.mkdir();
-        kmlFile = Environment.getExternalStoragePublicDirectory("KML/" + kmlName);
-        kml = new KmlDocument();
-        if(!kmlFile.exists()){
-            try {
-                kmlFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        kml.parseKMLFile(kmlFile);
-        listView = findViewById(R.id.listView);
-        btnSend = findViewById(R.id.btnSend);
-        edtTextMsg = findViewById(R.id.edtTextMsg);
-        imageView = findViewById(R.id.imageView);
+
         if(!hasPermissions(this,permissions)){
             ActivityCompat.requestPermissions(this,permissions,MULTIPLE_PERMISSIONS);
         }
+
         adapter = new ChatMessageAdapter(this,new ArrayList<ChatMessage>());
         listView.setAdapter(adapter);
 
+        onclickListener();
+
+        boolean available = isSDCardAvailable();
+
+        AssetManager assets = getResources().getAssets();
+        String out1= Environment.getExternalStorageDirectory().getAbsolutePath();
+        File fileName = new File(out1 + "/TBC/bots/TBC");
+        boolean makeFile = fileName.mkdirs();
+
+        if (fileName.exists()) {
+
+            //read the line
+            try {
+
+                for (String dir : assets.list("TBC")) {
+
+                    File subDir = new File(fileName.getPath() + "/" + dir);
+                    boolean subDir_Check = subDir.mkdirs();
+
+                    for (String file : assets.list("TBC/" + dir)) {
+                        File newFile = new File(fileName.getPath() + "/" + dir +"/" + file);
+
+                        if(newFile.exists()){
+                            continue;
+                        }
+                        InputStream in;
+                        OutputStream out;
+                        String str;
+                        in = assets.open("TBC/" + dir +"/" + file);
+                        out = new FileOutputStream(fileName.getPath() + "/" + dir +"/" + file);
+
+                        // copy files from assets to the mobile or any secondary storage
+
+                        copyFile(in,out);
+                        in.close();
+                        out.flush();
+                        out.close();
+
+                    }
+                }
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+
+        // get the working directory
+        MagicStrings.root_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/TBC";
+        AIMLProcessor.extension = new PCAIMLProcessorExtension();
+
+        AIMLProcessor.extension= new sample();
+
+        bot = new Bot("TBC",MagicStrings.root_path,"chat");
+        chat = new Chat(bot);
+    }
+
+    private void onclickListener() {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -121,11 +162,9 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this,"Please enter a query",Toast.LENGTH_SHORT).show();
                     return;
                 }
-                fun(message);
+                fun(message,"text");
             }
         });
-
-
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -171,70 +210,39 @@ public class MainActivity extends AppCompatActivity {
         img.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CaptureImage(v);
+                CaptureImage();
             }
         });
         vid.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                RecordVideo(v);
+                RecordVideo();
             }
         });
+    }
 
-        boolean available = isSDCardAvailable();
+    private void initialize() {
+        fab = findViewById(R.id.floatBtn);
+        img = findViewById(R.id.Image);
+        vid = findViewById(R.id.Video);
+        map = findViewById(R.id.Map);
+        save = findViewById(R.id.save);
+        listView = findViewById(R.id.listView);
+        btnSend = findViewById(R.id.btnSend);
+        edtTextMsg = findViewById(R.id.edtTextMsg);
+        imageView = findViewById(R.id.imageView);
 
-        AssetManager assets = getResources().getAssets();
-        String out1= Environment.getExternalStorageDirectory().getAbsolutePath();
-        File fileName = new File(out1 + "/TBC/bots/TBC");
-
-        boolean makeFile = fileName.mkdirs();
-
-        if (fileName.exists()) {
-
-            //read the line
+        kmlName ="KML" + generateRandomString() + ".kml";
+        kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/" + kmlName);
+        kml = new KmlDocument();
+        if(!kmlFile.exists()){
             try {
-
-                for (String dir : assets.list("TBC")) {
-
-                    File subDir = new File(fileName.getPath() + "/" + dir);
-                    boolean subDir_Check = subDir.mkdirs();
-
-                    for (String file : assets.list("TBC/" + dir)) {
-                        File newFile = new File(fileName.getPath() + "/" + dir +"/" + file);
-
-                        if(newFile.exists()){
-                            continue;
-                        }
-
-
-                        InputStream in;
-                        OutputStream out;
-                        String str;
-                        in = assets.open("TBC/" + dir +"/" + file);
-                        out = new FileOutputStream(fileName.getPath() + "/" + dir +"/" + file);
-
-                        // copy files from assets to the mobile or any secondary storage
-
-                        copyFile(in,out);
-                        in.close();
-                        out.flush();
-                        out.close();
-
-                    }
-                }
-            }catch (IOException e){
+                kmlFile.createNewFile();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
-        // get the working directory
-        MagicStrings.root_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/TBC";
-        AIMLProcessor.extension = new PCAIMLProcessorExtension();
-
-        AIMLProcessor.extension= new sample();
-
-        bot = new Bot("TBC",MagicStrings.root_path,"chat");
-        chat = new Chat(bot);
+        kml.parseKMLFile(kmlFile);
     }
 
 
@@ -263,29 +271,49 @@ public class MainActivity extends AppCompatActivity {
         ChatMessage chatMessage = new ChatMessage(2,message);
         adapter.add(chatMessage);
     }
-    public static void  fun(String message){
-        System.out.println(message);
+    private static void replyImage(){
+        ChatMessage chatMessage = new ChatMessage(3,mCurrentMediaPath);
+        adapter.add(chatMessage);
+    }
+    private static void replyVideo(){
+        ChatMessage chatMessage = new ChatMessage(4,mCurrentMediaPath);
+        adapter.add(chatMessage);
+    }
+    public static void  fun(String message,String type){
         String dummy;
         if(response==null) dummy = message;
-        else dummy=response + ":" + message;
+        else dummy=response + "-" + message;
+        if(type =="image"){
+            message = "qwertyuu";
+            replyImage();
+        }
+        else if(type == "video"){
+            message = "qwertyuu";
+            replyVideo();
+        }
+        else if(type == "audio"){
+            message = "qwertyuu";
+
+        }
+        else if(type == "text"){
+            sendMessage(message);
+        }
         response = chat.multisentenceRespond(message);
-        sendMessage(message);
         botsReply(response);
-        String uniqueId = generateRandomString();
-        String lastKey = getLatestKey();
-        String msg = ChatUtils.getExtendedDataFormatName(dummy,"map",uniqueId);
-        kml.mKmlRoot.setExtendedData(lastKey,msg);
-        kml.saveAsKML(kmlFile);
         for(int i=0;i<al.size();i++)
         {
             String dum =al.get(i);
             botButton(dum);
         }
         al.clear();
-
         //clear editText
         edtTextMsg.setText("");
         listView.setSelection(adapter.getCount()-1);
+        String uniqueId = generateRandomString();
+        String lastKey = getLatestKey();
+        String msg = ChatUtils.getExtendedDataFormatName(dummy,type,uniqueId);
+        kml.mKmlRoot.setExtendedData(lastKey,msg);
+        kml.saveAsKML(kmlFile);
     }
 
     public boolean hasPermissions(Context context, String... permissions){
@@ -299,76 +327,35 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    static final int REQUEST_TAKE_PHOTO = 1;
-    static final int REQUEST_VIDEO_CAPTURE=1;
-
-
-    public void CaptureImage(View view) {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Ensure that there's a camera activity to handle the intent
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            // Create the File where the photo should go
-            File photoFile = null;
-            try {
-                photoFile = createImageFile();
-                Toast.makeText(this, "Image File Created!", Toast.LENGTH_SHORT).show();
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-            }
-            // Continue only if the File was successfully created
-            if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovidermedia",
-                        photoFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-                //setPic();
-            }
-        }
-    }
-
-    //create image name
-    private File createImageFile() throws IOException {
+    public void CaptureImage(){
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        cameraIntent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, "262144");
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName="JPG"+timeStamp+"_";
-        File storgeDir= getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image=File.createTempFile(imageFileName,".jpg",storgeDir);
-        mCurrentPhotoPath=image.getAbsolutePath();
-        tempImage=image.getName();
-        System.out.println("filename-" + tempImage);
-        System.out.println("Directory" + mCurrentPhotoPath);
-        return image;
+        String fileName = "IMG" + timeStamp + "_" + generateRandomString() + ".jpg";
+        String path="DextorBot/DextorImage/";
+        File image = Environment.getExternalStoragePublicDirectory(path + fileName);
+        Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", image);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivityForResult(cameraIntent, 1000);
+        tempImage = image.getName();
+        mCurrentMediaPath = image.getAbsolutePath();
+        fun(fileName,"image");
     }
 
-    public void RecordVideo(View video){
-        Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-        if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
-            File VideoFile = null;
-            try {
-                VideoFile = createVideoFile();
-                Toast.makeText(this, "Video File Created!", Toast.LENGTH_SHORT).show();
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-            }
-            // Continue only if the File was successfully created
-            if (VideoFile != null) {
-                Uri videoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovidermedia",
-                        VideoFile);
-
-                takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, videoURI);
-                startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
-            }
-        }
-    }
-
-    private File createVideoFile() throws IOException{
+    private void RecordVideo() {
+        Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String videoFileName="VID"+timeStamp+"_";
-        File storgeDir= getExternalFilesDir(Environment.DIRECTORY_MOVIES);
-        File video=File.createTempFile(videoFileName,".mp4",storgeDir);
-        mCurrentPhotoPath=video.getAbsolutePath();
-        return video;
+        String fileName = "VID" + timeStamp + "_" + generateRandomString() + ".mp4";
+        String path = "DextorBot/DextorVideo/";
+        File video = Environment.getExternalStoragePublicDirectory(path + fileName);
+        Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", video);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        cameraIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 10);
+        startActivityForResult(cameraIntent, 1001);
+        mCurrentMediaPath=video.getAbsolutePath();
+        fun(fileName,"video");
     }
 
     private static String generateRandomString(){

@@ -19,7 +19,7 @@
         <activity android:name=".Maps.MapActivity"></activity>
         <activity android:name=".Maps.SavedActivity"></activity>
         <activity android:name=".Maps.RenderMapActivity"></activity>
-        <activity android:name=".Maps.ImageViewActivity"></activity>
+        <activity android:name=".ImageViewActivity"></activity>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,12 +29,12 @@
         </activity>
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.example.android.fileprovidermedia"
+            android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file"></meta-data>
+                android:resource="@xml/file" />
         </provider>
     </application>
 
