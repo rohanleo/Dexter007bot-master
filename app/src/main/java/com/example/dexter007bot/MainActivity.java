@@ -1,11 +1,14 @@
 package com.example.dexter007bot;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 
@@ -21,8 +24,11 @@ import androidx.core.content.FileProvider;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -66,12 +72,11 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.CAMERA};
-    FloatingActionButton fab;
-    FloatingActionButton img;
-    FloatingActionButton vid;
-    FloatingActionButton map;
-    FloatingActionButton save;
-    Boolean isOpen =false;
+
+    FloatingActionButton btnAttach;
+    LinearLayout atMap, atCamera, atVideo, revealLayout;
+    int cx,cy;
+    Boolean hidden = true;
 
     static String mCurrentMediaPath;
     public static String tempImage=null,response=null;
@@ -87,8 +92,6 @@ public class MainActivity extends AppCompatActivity {
         initialize();
 
         AddDirectory.addDirectory();
-
-        isOpen =false;
 
         if(!hasPermissions(this,permissions)){
             ActivityCompat.requestPermissions(this,permissions,MULTIPLE_PERMISSIONS);
@@ -165,72 +168,102 @@ public class MainActivity extends AppCompatActivity {
                 fun(message,"text");
             }
         });
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(isOpen){
-                    map.hide();
-                    img.hide();
-                    vid.hide();
-                    save.hide();
-                    img.setClickable(false);
-                    vid.setClickable(false);
-                    map.setClickable(false);
-                    save.setClickable(false);
-                    isOpen=false;
-                }
-                else
-                {
-                    img.show();
-                    vid.show();
-                    map.show();
-                    save.show();
-                    img.setClickable(true);
-                    vid.setClickable(true);
-                    map.setClickable(true);
-                    save.setClickable(true);
-                    isOpen=true;
-                }
-            }
-        });
-        save.setOnClickListener(new View.OnClickListener() {
+        btnAttach.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, SavedActivity.class);
-                startActivity(intent);
+                makeEffect(revealLayout,cx,cy);
             }
         });
-        map.setOnClickListener(new View.OnClickListener() {
+        atMap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                makeEffect(revealLayout,cx,cy);
                 Intent intent = new Intent(MainActivity.this, MapActivity.class);
                 startActivity(intent);
             }
         });
-        img.setOnClickListener(new View.OnClickListener() {
+        atCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                makeEffect(revealLayout,cx,cy);
                 CaptureImage();
             }
         });
-        vid.setOnClickListener(new View.OnClickListener() {
+        atVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                makeEffect(revealLayout,cx,cy);
                 RecordVideo();
             }
         });
     }
 
+    private void makeEffect(final LinearLayout layout, int cx, int cy) {
+        int radius = Math.max(layout.getWidth(), layout.getHeight());
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+
+
+            Animator animator =
+                    ViewAnimationUtils.createCircularReveal(layout, cx, cy, 0, radius);
+            animator.setInterpolator(new AccelerateDecelerateInterpolator());
+            animator.setDuration(800);
+
+            //Animator animator_reverse = animator.reverse();
+
+            if (hidden) {
+                layout.setVisibility(View.VISIBLE);
+                animator.start();
+                hidden = false;
+            } else {
+                Animator anim = android.view.ViewAnimationUtils.createCircularReveal(layout, cx, cy, radius, 0);
+                anim.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        layout.setVisibility(View.INVISIBLE);
+                        hidden = true;
+                    }
+                });
+                anim.start();
+            }
+        } else {
+            if (hidden) {
+                Animator anim = android.view.ViewAnimationUtils.createCircularReveal(layout, cx, cy, 0, radius);
+                layout.setVisibility(View.VISIBLE);
+                anim.start();
+                hidden = false;
+
+            } else {
+                Animator anim = android.view.ViewAnimationUtils.createCircularReveal(layout, cx, cy, radius, 0);
+                anim.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        layout.setVisibility(View.INVISIBLE);
+                        hidden = true;
+                    }
+                });
+                anim.start();
+
+            }
+        }
+    }
+
     private void initialize() {
-        fab = findViewById(R.id.floatBtn);
-        img = findViewById(R.id.Image);
-        vid = findViewById(R.id.Video);
-        map = findViewById(R.id.Map);
-        save = findViewById(R.id.save);
         listView = findViewById(R.id.listView);
         btnSend = findViewById(R.id.btnSend);
         edtTextMsg = findViewById(R.id.edtTextMsg);
         imageView = findViewById(R.id.imageView);
+
+        btnAttach = findViewById(R.id.btnAttach);
+        revealLayout = findViewById(R.id.reveal_items2);
+        revealLayout.setVisibility(View.INVISIBLE);
+        cx = revealLayout.getRight();
+        cy =  revealLayout.getBottom();
+        atCamera = findViewById(R.id.atCamera);
+        atMap = findViewById(R.id.atMap);
+        atVideo = findViewById(R.id.atVideo);
 
         kmlName ="KML" + generateRandomString() + ".kml";
         kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/" + kmlName);

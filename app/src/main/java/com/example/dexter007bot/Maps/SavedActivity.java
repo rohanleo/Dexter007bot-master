@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -35,26 +36,31 @@ public class SavedActivity extends AppCompatActivity {
         uriArrayList = new ArrayList<String>();
         adapter = new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1,arrayList);
 
-        String path = Environment.getExternalStorageDirectory() + "/kml";
+        String path = Environment.getExternalStorageDirectory() + "/DextorBot/DexterKml";
         Log.d("PATH",path);
         File directory = new File(path);
         File[] files = directory.listFiles();
-        for(int i = 0 ; i < files.length ; i++){
-            arrayList.add(files[i].getName());
-            uriArrayList.add(files[i].getAbsolutePath());
-            Log.d("NAME",files[i].getName());
+        /*if(files == null){
+            Toast.makeText(getApplicationContext(),"No files found",Toast.LENGTH_LONG).show();
         }
-
-        listView.setAdapter(adapter);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Send the url of the file to the RenderMap intent
-                Intent intent = new Intent(getApplicationContext(), RenderMapActivity.class);
-                intent.putExtra("kml_file_uri",uriArrayList.get(position));
-                startActivity(intent);
+        else{*/
+            for(int i = 0 ; i < files.length ; i++){
+                arrayList.add(files[i].getName());
+                uriArrayList.add(files[i].getAbsolutePath());
+                Log.d("NAME",files[i].getName());
             }
-        });
+
+            listView.setAdapter(adapter);
+
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    // Send the url of the file to the RenderMap intent
+                    Intent intent = new Intent(getApplicationContext(), RenderMapActivity.class);
+                    intent.putExtra("kml_file_uri",uriArrayList.get(position));
+                    startActivity(intent);
+                }
+            });
+        //}
     }
 }
