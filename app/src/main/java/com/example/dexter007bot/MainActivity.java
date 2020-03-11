@@ -23,6 +23,7 @@ import androidx.core.content.FileProvider;
 
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -79,7 +80,10 @@ public class MainActivity extends AppCompatActivity {
     Boolean hidden = true;
 
     static String mCurrentMediaPath;
-    public static String tempImage=null,response=null;
+    public static String tempImage=null,tempVideo=null ,response=null;
+    Boolean isImage=false, isVideo=false;
+    String fileName = null;
+
     public static KmlDocument kml ;
     static File kmlFile;
     String kmlName;
@@ -155,6 +159,29 @@ public class MainActivity extends AppCompatActivity {
         chat = new Chat(bot);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkMediaAvailabilty();
+    }
+
+    private void checkMediaAvailabilty() {
+        if(isImage){
+            boolean check = checkPath(fileName,"image");
+            if(check){
+                fun(fileName,"image");
+            }
+            isImage = false;
+            fileName = null;
+        }
+        if(isVideo){
+            boolean check = checkPath(fileName,"video");
+            if(check) fun(fileName,"video");
+            isVideo = true;
+            fileName = null;
+        }
+    }
+
     private void onclickListener() {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -186,16 +213,37 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 makeEffect(revealLayout,cx,cy);
-                CaptureImage();
+                fileName=CaptureImage();
+                isImage = true;
             }
         });
         atVideo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 makeEffect(revealLayout,cx,cy);
-                RecordVideo();
+                fileName=RecordVideo();
+                isVideo = true;
             }
         });
+    }
+
+    private boolean checkPath(String fileName, String type) {
+        if(type.equals("image")){
+            File image=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/" + fileName);
+            //System.out.print("checkPath:-image  " + tempImage + " " + fileName);
+            if(!image.exists()){
+                //System.out.println(" false" );
+                return false;
+            }
+        }
+        else if(type.equals("video")){
+            File video=Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/" + fileName);
+            //System.out.print("checkPath:-video  " + tempVideo + " " + fileName);
+            if(!video.exists()){
+                return false;
+            }
+        }
+        return true;
     }
 
     private void makeEffect(final LinearLayout layout, int cx, int cy) {
@@ -360,7 +408,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    public void CaptureImage(){
+    public String CaptureImage(){
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, "262144");
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -373,10 +421,11 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(cameraIntent, 1000);
         tempImage = image.getName();
         mCurrentMediaPath = image.getAbsolutePath();
-        fun(fileName,"image");
+        //fun(fileName,"image");
+        return fileName;
     }
 
-    private void RecordVideo() {
+    private String RecordVideo() {
         Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String fileName = "VID" + timeStamp + "_" + generateRandomString() + ".mp4";
@@ -387,8 +436,9 @@ public class MainActivity extends AppCompatActivity {
         cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         cameraIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 10);
         startActivityForResult(cameraIntent, 1001);
+        tempVideo = video.getName();
         mCurrentMediaPath=video.getAbsolutePath();
-        fun(fileName,"video");
+        return fileName;
     }
 
     private static String generateRandomString(){
