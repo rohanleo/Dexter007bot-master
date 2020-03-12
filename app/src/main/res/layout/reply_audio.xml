@@ -27,13 +27,15 @@
             android:layout_alignParentTop="true"
             app:srcCompat="@drawable/ic_play_arrow_black_24dp" />
 
-        <com.annimon.paperstyle.PaperSeekBar
-            android:id="@+id/outgoing_seekbar"
-            android:layout_width="200dp"
+        <Chronometer
+            android:id="@+id/chronometerLay"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/outgoing_imageButton"
             android:layout_centerVertical="true"
-            custom:pw_color="@color/red"
-            android:layout_toEndOf="@+id/outgoing_imageButton" />
+            android:layout_marginStart="25dp"
+            android:textColor="#ffffff"
+            android:textSize="25sp" />
 
     </me.himanshusoni.chatmessageview.ChatMessageView>
 </RelativeLayout>

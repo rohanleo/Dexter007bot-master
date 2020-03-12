@@ -8,12 +8,14 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -120,18 +122,26 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
         else if(viewType == AUDIO){
             convertView = LayoutInflater.from((getContext())).inflate(R.layout.reply_audio,parent,false);
             ImageButton imageButton = convertView.findViewById(R.id.outgoing_imageButton);
+            final Chronometer chronometer = convertView.findViewById(R.id.chronometerLay);
+            Boolean isPlaying = false;
             imageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    final MediaPlayer mediaPlayer = new MediaPlayer();
+                    //Log.e("ChatmessageAdapter:- ", getItem(position).getContent());
+                    final MediaPlayer[] mediaPlayer = {new MediaPlayer()};
                     try {
-                        mediaPlayer.setDataSource(getItem(position).getContent());
-                        mediaPlayer.prepare();
-                        mediaPlayer.start();
-                        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        mediaPlayer[0].setDataSource(getItem(position).getContent());
+                        mediaPlayer[0].prepare();
+                        chronometer.setBase(SystemClock.elapsedRealtime());
+                        chronometer.start();
+                        mediaPlayer[0].start();
+                        mediaPlayer[0].setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mp) {
-                                mediaPlayer.release();
+                                mediaPlayer[0].release();
+                                mediaPlayer[0] =null;
+                                chronometer.stop();
+                                chronometer.setBase(SystemClock.elapsedRealtime());
                             }
                         });
                     } catch (IOException e) {
@@ -140,12 +150,6 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
                 }
             });
         }
-        /*convertView.findViewById(R.id.chatMessageView).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(getContext(),"Clicked...",Toast.LENGTH_SHORT).show();
-            }
-        });*/
 
         return convertView;
     }

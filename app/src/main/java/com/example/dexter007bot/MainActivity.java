@@ -194,7 +194,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkMediaAvailabilty() {
-        Log.e("checkMediaAvailabili:", "isAudio" + isAudio);
         if(isImage){
             //Log.e("checkMediaAvailabili:", "image");
             boolean check = checkPath(tempImage,"image");
@@ -212,9 +211,9 @@ public class MainActivity extends AppCompatActivity {
         }
         if(isAudio){
             //Log.e("checkMediaAvailabili:", "audio" + isAudio);
-            Log.e("checkMediaAvailabili:", "tempAudio:- " + tempAudio);
+            //Log.e("checkMediaAvailabili:", "tempAudio:- " + tempAudio);
             boolean check = checkPath(tempAudio,"audio");
-            Log.e("checkMediaAvailabili:", "check:- " + check);
+            //Log.e("checkMediaAvailabili:", "check:- " + check);
             if(check) fun(tempAudio,"audio");
             isAudio = false;
             tempAudio = null;
@@ -294,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else if(type.equals("audio")){
             File audio=Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/" + fileName);
-            Log.e("CheckPath: ", "audio fileName:- " + fileName);
+            //Log.e("CheckPath: ", "audio fileName:- " + fileName);
             if(!audio.exists()){
                 return false;
             }
@@ -424,7 +423,7 @@ public class MainActivity extends AppCompatActivity {
     }
     public static void  fun(String message,String type){
         String dummy;
-        Log.e("fun:- ", type + message);
+        //Log.e("fun:- ", type + message);
         if(response==null) dummy = message;
         else dummy=response + "-" + message;
         if(type =="image"){
@@ -484,7 +483,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(cameraIntent, 1000);
         tempImage = image.getName();
         mCurrentMediaPath = image.getAbsolutePath();
-        Log.e("CaptureImage: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
+        //Log.e("CaptureImage: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
         //fun(fileName,"image");
     }
 
@@ -501,7 +500,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(cameraIntent, 1001);
         tempVideo = video.getName();
         mCurrentMediaPath=video.getAbsolutePath();
-        Log.e("RecordVideo: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
+        //Log.e("RecordVideo: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
         //return fileName;
     }
 
@@ -533,7 +532,7 @@ public class MainActivity extends AppCompatActivity {
         final String finalFilePath = Environment.getExternalStoragePublicDirectory(path + fileName).getAbsolutePath();
         tempAudio = fileName;
         mCurrentMediaPath = finalFilePath;
-        Log.e("RecordAudio: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
+        //Log.e("RecordAudio: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
