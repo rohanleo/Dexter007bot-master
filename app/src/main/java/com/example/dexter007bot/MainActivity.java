@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,21 +18,33 @@ import com.example.dexter007bot.AIML.sample;
 import com.example.dexter007bot.Chats.ChatUtils;
 import com.example.dexter007bot.Maps.MapActivity;
 import com.example.dexter007bot.Maps.SavedActivity;
+import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
+import com.github.javiersantos.materialstyleddialogs.enums.Duration;
+import com.github.javiersantos.materialstyleddialogs.enums.Style;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewAnimationUtils;
+import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.dexter007bot.Adapter.ChatMessageAdapter;
@@ -72,21 +86,35 @@ public class MainActivity extends AppCompatActivity {
     private final String[] permissions = new String[]{
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA};
+            Manifest.permission.CAMERA,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.RECORD_AUDIO};
 
     FloatingActionButton btnAttach;
-    LinearLayout atMap, atCamera, atVideo, revealLayout;
+    LinearLayout atMap, atCamera, atVideo, atAudio, revealLayout;
     int cx,cy;
     Boolean hidden = true;
 
+    //audio
+    boolean isRecording, isPlaying;
+    private MediaRecorder recorder;
+    private MediaPlayer mediaPlayer;
+    private ImageView recordButton, playButton;
+    private Chronometer chronometer;
+    private Button backButton, okayButton;
+    private TextView recordText;
+
     static String mCurrentMediaPath;
-    public static String tempImage=null,tempVideo=null ,response=null;
-    Boolean isImage=false, isVideo=false;
+    public static String tempImage=null,tempVideo=null, tempAudio=null ,response=null;
+    Boolean isImage=false, isVideo=false, isAudio=false;
     String fileName = null;
 
     public static KmlDocument kml ;
     static File kmlFile;
     String kmlName;
+
+    RelativeLayout relativeLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,19 +194,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkMediaAvailabilty() {
+        Log.e("checkMediaAvailabili:", "isAudio" + isAudio);
         if(isImage){
-            boolean check = checkPath(fileName,"image");
+            //Log.e("checkMediaAvailabili:", "image");
+            boolean check = checkPath(tempImage,"image");
             if(check){
-                fun(fileName,"image");
+                fun(tempImage,"image");
             }
             isImage = false;
-            fileName = null;
+            tempImage = null;
         }
         if(isVideo){
-            boolean check = checkPath(fileName,"video");
-            if(check) fun(fileName,"video");
-            isVideo = true;
-            fileName = null;
+            boolean check = checkPath(tempVideo,"video");
+            if(check) fun(tempVideo,"video");
+            isVideo = false;
+            tempVideo = null;
+        }
+        if(isAudio){
+            //Log.e("checkMediaAvailabili:", "audio" + isAudio);
+            Log.e("checkMediaAvailabili:", "tempAudio:- " + tempAudio);
+            boolean check = checkPath(tempAudio,"audio");
+            Log.e("checkMediaAvailabili:", "check:- " + check);
+            if(check) fun(tempAudio,"audio");
+            isAudio = false;
+            tempAudio = null;
         }
     }
 
@@ -213,7 +252,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 makeEffect(revealLayout,cx,cy);
-                fileName=CaptureImage();
+                CaptureImage();
                 isImage = true;
             }
         });
@@ -221,8 +260,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 makeEffect(revealLayout,cx,cy);
-                fileName=RecordVideo();
+                RecordVideo();
                 isVideo = true;
+            }
+        });
+        atAudio.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                makeEffect(revealLayout,cx,cy);
+                RecordAudio();
+                //Log.e("atAudio listner:", "audio");
+                //isAudio=true;
+                //checkMediaAvailabilty();
             }
         });
     }
@@ -240,6 +289,13 @@ public class MainActivity extends AppCompatActivity {
             File video=Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/" + fileName);
             //System.out.print("checkPath:-video  " + tempVideo + " " + fileName);
             if(!video.exists()){
+                return false;
+            }
+        }
+        else if(type.equals("audio")){
+            File audio=Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/" + fileName);
+            Log.e("CheckPath: ", "audio fileName:- " + fileName);
+            if(!audio.exists()){
                 return false;
             }
         }
@@ -299,6 +355,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initialize() {
+        relativeLayout = findViewById(R.id.relative);
         listView = findViewById(R.id.listView);
         btnSend = findViewById(R.id.btnSend);
         edtTextMsg = findViewById(R.id.edtTextMsg);
@@ -312,6 +369,7 @@ public class MainActivity extends AppCompatActivity {
         atCamera = findViewById(R.id.atCamera);
         atMap = findViewById(R.id.atMap);
         atVideo = findViewById(R.id.atVideo);
+        atAudio = findViewById(R.id.atAudio);
 
         kmlName ="KML" + generateRandomString() + ".kml";
         kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/" + kmlName);
@@ -360,8 +418,13 @@ public class MainActivity extends AppCompatActivity {
         ChatMessage chatMessage = new ChatMessage(4,mCurrentMediaPath);
         adapter.add(chatMessage);
     }
+    private static void replyAudio() {
+        ChatMessage chatMessage = new ChatMessage(5,mCurrentMediaPath);
+        adapter.add(chatMessage);
+    }
     public static void  fun(String message,String type){
         String dummy;
+        Log.e("fun:- ", type + message);
         if(response==null) dummy = message;
         else dummy=response + "-" + message;
         if(type =="image"){
@@ -374,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else if(type == "audio"){
             message = "qwertyuu";
-
+            replyAudio();
         }
         else if(type == "text"){
             sendMessage(message);
@@ -408,7 +471,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    public String CaptureImage(){
+    private void   CaptureImage(){
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, "262144");
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -421,11 +484,11 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(cameraIntent, 1000);
         tempImage = image.getName();
         mCurrentMediaPath = image.getAbsolutePath();
+        Log.e("CaptureImage: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
         //fun(fileName,"image");
-        return fileName;
     }
 
-    private String RecordVideo() {
+    private void RecordVideo() {
         Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String fileName = "VID" + timeStamp + "_" + generateRandomString() + ".mp4";
@@ -438,7 +501,162 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(cameraIntent, 1001);
         tempVideo = video.getName();
         mCurrentMediaPath=video.getAbsolutePath();
-        return fileName;
+        Log.e("RecordVideo: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
+        //return fileName;
+    }
+
+    private void RecordAudio(){
+        View view = getLayoutInflater().inflate(R.layout.audio_popup_layout, null);
+        final MaterialStyledDialog materialStyledDialog = new MaterialStyledDialog.Builder(MainActivity.this)
+                .setTitle("Audio")
+                .setCustomView(view, 10, 20, 10, 20)
+                .withDialogAnimation(true, Duration.FAST)
+                .setCancelable(false)
+                .setStyle(Style.HEADER_WITH_TITLE)
+                .withDarkerOverlay(true)
+                .build();
+        recordButton = view.findViewById(R.id.record_button_dialog);
+        chronometer = view.findViewById(R.id.chronometer);
+        backButton = view.findViewById(R.id.record_dialog_back_button);
+        okayButton = view.findViewById(R.id.record_dialog_ok_button);
+        recordText = view.findViewById(R.id.record_button_text);
+        playButton = view.findViewById(R.id.play_button_dialog);
+
+        playButton.setEnabled(false);
+        isRecording = false;
+        isPlaying = false;
+        recorder = null;
+
+        String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        final String fileName ="AUD" + "_" + timeStamp + "_" + generateRandomString() + ".mp3";
+        String path = "DextorBot/DextorAudio/";
+        final String finalFilePath = Environment.getExternalStoragePublicDirectory(path + fileName).getAbsolutePath();
+        tempAudio = fileName;
+        mCurrentMediaPath = finalFilePath;
+        Log.e("RecordAudio: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                materialStyledDialog.dismiss();
+                stopPlaying();
+                File file = new File(finalFilePath);
+                if (file.exists())
+                    file.delete();
+            }
+        });
+        okayButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                materialStyledDialog.dismiss();
+                stopPlaying();
+                isAudio=true;
+                checkMediaAvailabilty();
+            }
+        });
+
+        recordButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isRecording) {
+                    startRecording(finalFilePath);
+                    backButton.setEnabled(false);
+                    okayButton.setEnabled(false);
+                    playButton.setEnabled(false);
+                    playButton.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+                    recordText.setText("Recording...");
+                    recordButton.setImageResource(R.drawable.ic_mic_black_24dp);
+                    isRecording = true;
+                } else {
+                    stopRecording();
+                    backButton.setEnabled(true);
+                    okayButton.setEnabled(true);
+                    playButton.setEnabled(true);
+                    playButton.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+                    recordText.setText("Record");
+                    recordButton.setImageResource(R.drawable.ic_mic_black_24dp);
+                    isRecording = false;
+                }
+            }
+        });
+
+        playButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isPlaying) {
+                    startPlaying(finalFilePath);
+                    recordButton.setImageResource(R.drawable.ic_mic_off_black_24dp);
+                    recordButton.setEnabled(false);
+                    playButton.setImageResource(R.drawable.ic_pause_black_24dp);
+                } else {
+                    stopPlaying();
+                    recordButton.setImageResource(R.drawable.ic_mic_black_24dp);
+                    recordButton.setEnabled(true);
+                    playButton.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+                }
+            }
+        });
+
+        materialStyledDialog.show();
+        //materialDialog.dismiss();
+        //fun(tempAudio,"audio");
+        //return fileName;
+    }
+
+    private void startPlaying(String filePath) {
+        mediaPlayer = new MediaPlayer();
+        try {
+            mediaPlayer.setDataSource(filePath);
+            mediaPlayer.prepare();
+            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.start();
+            mediaPlayer.start();
+            isPlaying = true;
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    stopPlaying();
+                    recordButton.setImageResource(R.drawable.ic_mic_black_24dp);
+                    recordButton.setEnabled(true);
+                    playButton.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+                }
+            });
+        } catch (IOException e) {
+            Log.e("AUDIO_CHAT", "prepare() failed");
+        }
+
+    }
+
+    private void stopPlaying() {
+        if (mediaPlayer != null)
+            mediaPlayer.release();
+        isPlaying = false;
+        mediaPlayer = null;
+        chronometer.stop();
+    }
+
+    private void startRecording(String filePath) {
+
+        recorder = new MediaRecorder();
+        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        recorder.setOutputFile(filePath);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        try {
+            recorder.prepare();
+        } catch (IOException e) {
+            Log.e("AUDIO_CHAT", "prepare() failed");
+        }
+
+        recorder.start();
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        chronometer.start();
+    }
+
+    private void stopRecording() {
+        recorder.stop();
+        chronometer.stop();
+        recorder.release();
+        recorder = null;
     }
 
     private static String generateRandomString(){

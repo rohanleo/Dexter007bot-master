@@ -7,11 +7,14 @@ import androidx.annotation.Nullable;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaPlayer;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +25,7 @@ import com.example.dexter007bot.MainActivity;
 import com.example.dexter007bot.Model.ChatMessage;
 import com.example.dexter007bot.R;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
@@ -31,6 +35,7 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
     private static final int BOT_BUTTON = 2;
     private static final int IMAGE = 3;
     private static final int VIDEO = 4;
+    private static final int AUDIO = 5;
 
     public ChatMessageAdapter(@NonNull Context context, List<ChatMessage> data){
         super(context, R.layout.user_query_layout,data);
@@ -47,7 +52,7 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
 
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+    public View getView(final int position, @Nullable View convertView, @NonNull ViewGroup parent) {
 
         int viewType = getItemViewType(position);
         System.out.println(viewType);
@@ -112,19 +117,41 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
                 }
             });
         }
-
-        convertView.findViewById(R.id.chatMessageView).setOnClickListener(new View.OnClickListener() {
+        else if(viewType == AUDIO){
+            convertView = LayoutInflater.from((getContext())).inflate(R.layout.reply_audio,parent,false);
+            ImageButton imageButton = convertView.findViewById(R.id.outgoing_imageButton);
+            imageButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    final MediaPlayer mediaPlayer = new MediaPlayer();
+                    try {
+                        mediaPlayer.setDataSource(getItem(position).getContent());
+                        mediaPlayer.prepare();
+                        mediaPlayer.start();
+                        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mp) {
+                                mediaPlayer.release();
+                            }
+                        });
+                    } catch (IOException e) {
+                        Log.e("AUDIO_CHAT", "prepare() failed");
+                    }
+                }
+            });
+        }
+        /*convertView.findViewById(R.id.chatMessageView).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(getContext(),"Clicked...",Toast.LENGTH_SHORT).show();
             }
-        });
+        });*/
 
         return convertView;
     }
 
     @Override
     public int getViewTypeCount() {
-        return 5;
+        return 6;
     }
 }
