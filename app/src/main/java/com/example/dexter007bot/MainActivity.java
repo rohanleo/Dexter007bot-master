@@ -3,13 +3,22 @@ package com.example.dexter007bot;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
+import android.net.wifi.p2p.WifiP2pConfig;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pInfo;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,12 +31,17 @@ import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.javiersantos.materialstyleddialogs.enums.Duration;
 import com.github.javiersantos.materialstyleddialogs.enums.Style;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
+import android.os.Handler;
+import android.os.Message;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -63,10 +77,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
@@ -82,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
     public static ChatMessageAdapter adapter;
     public static ArrayList<String>al = new ArrayList<String>();
     //public static String id;
+
     public static final int MULTIPLE_PERMISSIONS = 10;
     private final String[] permissions = new String[]{
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -89,7 +109,11 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.CAMERA,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.RECORD_AUDIO};
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.CHANGE_WIFI_STATE,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.CHANGE_NETWORK_STATE};
 
     FloatingActionButton btnAttach;
     LinearLayout atMap, atCamera, atVideo, atAudio, revealLayout;
@@ -102,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
     private ImageView recordButton, playButton;
     private Chronometer chronometer;
-    private Button backButton, okayButton;
+    private Button backButton, okayButton,WiFibtn;
     private TextView recordText;
 
     static String mCurrentMediaPath;
@@ -115,6 +139,17 @@ public class MainActivity extends AppCompatActivity {
     String kmlName;
 
     RelativeLayout relativeLayout;
+
+    WifiManager wifiManager;
+    WifiP2pManager mManager;
+    WifiP2pManager.Channel mChannel;
+
+    BroadcastReceiver mReceiver;
+    IntentFilter mIntentFilter;
+    List<WifiP2pDevice>peers=new ArrayList<WifiP2pDevice>();
+    String[] deviceNameArray;
+    WifiP2pDevice[] deviceArray;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -186,11 +221,109 @@ public class MainActivity extends AppCompatActivity {
         bot = new Bot("TBC",MagicStrings.root_path,"chat");
         chat = new Chat(bot);
     }
+    private void connectPeers() {
+        /*mManager.createGroup(mChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(MainActivity.this, "Group Formed", Toast.LENGTH_SHORT).show();
+                ServerTask server = new ServerTask(getApplicationContext());
+                server.execute();
+            }
+
+            @Override
+            public void onFailure(int reason) {
+            }
+        });*/
+        for(WifiP2pDevice curr: deviceArray) {
+            final WifiP2pDevice device = curr;
+            WifiP2pConfig config = new WifiP2pConfig();
+            config.deviceAddress = device.deviceAddress;
+            //System.out.println(device.deviceName);
+            mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Toast.makeText(MainActivity.this, "Connected to: " + device.deviceName, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    Toast.makeText(MainActivity.this, "Not Connected", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    public void discoverWifi() {
+        if(!wifiManager.isWifiEnabled()) {
+            Toast.makeText(this, "Enable WiFi", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Toast.makeText(MainActivity.this, "Discovering Peers", Toast.LENGTH_SHORT).show();
+                if(mManager!=null) {
+                    mManager.requestPeers(mChannel, peerListListener);
+                }
+            }
+            @Override
+            public void onFailure(int reason) {
+                Toast.makeText(MainActivity.this,"Discovering Failed",Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    WifiP2pManager.PeerListListener peerListListener =new WifiP2pManager.PeerListListener() {
+        @Override
+        public void onPeersAvailable(WifiP2pDeviceList peerList) {
+            if(!peerList.getDeviceList().equals(peers)){
+                peers.clear();
+                peers.addAll(peerList.getDeviceList());
+
+                deviceNameArray = new String[peerList.getDeviceList().size()];
+                deviceArray= new WifiP2pDevice[peerList.getDeviceList().size()];
+                //System.out.println("DeviceArrayCreated");
+                int index=0;
+                for(WifiP2pDevice device: peerList.getDeviceList()) {
+                    deviceNameArray[index] = device.deviceName;
+                    System.out.println(deviceNameArray[index]);
+                    deviceArray[index] = device;
+                    index++;
+                }
+            }
+            if(peers.size()==0){
+                Toast.makeText(MainActivity.this, "No Device Found", Toast.LENGTH_SHORT).show();
+            }
+            else connectPeers();
+        }
+    };
+    WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
+        @Override
+        public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
+            final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
+            if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner){
+                Toast.makeText(MainActivity.this, "Host", Toast.LENGTH_SHORT).show();
+                ServerTask server = new ServerTask(getApplicationContext());
+                server.execute();
+            }
+            else if(wifiP2pInfo.groupFormed){
+                Toast.makeText(MainActivity.this, "Client", Toast.LENGTH_SHORT).show();
+                ClientTask client =new ClientTask(getApplicationContext(),groupOwnerAddress.getHostAddress());
+                client.execute();
+            }
+        }
+    };
 
     @Override
     protected void onResume() {
         super.onResume();
         checkMediaAvailabilty();
+        registerReceiver(mReceiver,mIntentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mReceiver);
     }
 
     private void checkMediaAvailabilty() {
@@ -198,14 +331,16 @@ public class MainActivity extends AppCompatActivity {
             //Log.e("checkMediaAvailabili:", "image");
             boolean check = checkPath(tempImage,"image");
             if(check){
-                fun(tempImage,"image");
+                //fun(tempImage,"image");
+                replyImage();
             }
             isImage = false;
             tempImage = null;
         }
         if(isVideo){
             boolean check = checkPath(tempVideo,"video");
-            if(check) fun(tempVideo,"video");
+            if(check) //fun(tempVideo,"video");
+                replyVideo();
             isVideo = false;
             tempVideo = null;
         }
@@ -214,7 +349,8 @@ public class MainActivity extends AppCompatActivity {
             //Log.e("checkMediaAvailabili:", "tempAudio:- " + tempAudio);
             boolean check = checkPath(tempAudio,"audio");
             //Log.e("checkMediaAvailabili:", "check:- " + check);
-            if(check) fun(tempAudio,"audio");
+            if(check) //fun(tempAudio,"audio");
+                replyAudio();
             isAudio = false;
             tempAudio = null;
         }
@@ -271,6 +407,12 @@ public class MainActivity extends AppCompatActivity {
                 //Log.e("atAudio listner:", "audio");
                 //isAudio=true;
                 //checkMediaAvailabilty();
+            }
+        });
+        WiFibtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                discoverWifi();
             }
         });
     }
@@ -358,7 +500,8 @@ public class MainActivity extends AppCompatActivity {
         listView = findViewById(R.id.listView);
         btnSend = findViewById(R.id.btnSend);
         edtTextMsg = findViewById(R.id.edtTextMsg);
-        imageView = findViewById(R.id.imageView);
+        //imageView = findViewById(R.id.imageView);
+        WiFibtn =findViewById(R.id.WiFibtn);
 
         btnAttach = findViewById(R.id.btnAttach);
         revealLayout = findViewById(R.id.reveal_items2);
@@ -370,7 +513,7 @@ public class MainActivity extends AppCompatActivity {
         atVideo = findViewById(R.id.atVideo);
         atAudio = findViewById(R.id.atAudio);
 
-        kmlName ="KML" + generateRandomString() + ".kml";
+        kmlName ="KML" + "USER_1" + ".kml";
         kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/" + kmlName);
         kml = new KmlDocument();
         if(!kmlFile.exists()){
@@ -381,6 +524,16 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         kml.parseKMLFile(kmlFile);
+
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+        mChannel = mManager.initialize(this,getMainLooper(),null);
+        mReceiver = new WiFiDirect(mManager,mChannel,this);
+        mIntentFilter = new IntentFilter();
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
     }
 
 
@@ -470,7 +623,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void   CaptureImage(){
+    private void CaptureImage(){
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, "262144");
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());

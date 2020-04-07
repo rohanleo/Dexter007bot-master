@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Gradle: com.alexvasilkov:gesture-views:2.6.0@aar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/68ada1417ee2cd601b8a37494fce31ac/gesture-views-2.6.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/68ada1417ee2cd601b8a37494fce31ac/gesture-views-2.6.0/res" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.alexvasilkov/gesture-views/2.6.0/d86aec80dd716d6d2dcf681fcb1769638a245f92/gesture-views-2.6.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.alexvasilkov/gesture-views/2.6.0/78c1761587cbb80c8ca6423267dd49be8415ad06/gesture-views-2.6.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

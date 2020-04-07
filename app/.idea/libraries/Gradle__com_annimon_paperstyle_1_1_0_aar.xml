@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="Gradle: com.annimon:paperstyle:1.1.0@aar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/4bbaf4c7888a996048094c555b05fc3d/paperstyle-1.1.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-2/files-2.1/4bbaf4c7888a996048094c555b05fc3d/paperstyle-1.1.0/res" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.annimon/paperstyle/1.1.0/ba2f0e385a0d0d3e9de6c69000096c05535395e0/paperstyle-1.1.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.annimon/paperstyle/1.1.0/67f476b4f02e9358d26e0af3dfc0628ab37ca9b0/paperstyle-1.1.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
