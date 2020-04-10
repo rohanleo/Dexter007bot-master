@@ -3,7 +3,6 @@ package com.example.dexter007bot;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -31,17 +30,12 @@ import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.javiersantos.materialstyleddialogs.enums.Duration;
 import com.github.javiersantos.materialstyleddialogs.enums.Style;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
-import android.os.Handler;
-import android.os.Message;
 import android.os.SystemClock;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
@@ -78,9 +72,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -101,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
     public static ChatMessageAdapter adapter;
     public static ArrayList<String>al = new ArrayList<String>();
     //public static String id;
-
     public static final int MULTIPLE_PERMISSIONS = 10;
     private final String[] permissions = new String[]{
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -110,12 +100,10 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.CHANGE_WIFI_STATE,
             Manifest.permission.ACCESS_WIFI_STATE,
-            Manifest.permission.ACCESS_NETWORK_STATE,
-            Manifest.permission.CHANGE_NETWORK_STATE};
+            Manifest.permission.CHANGE_WIFI_STATE};
 
-    FloatingActionButton btnAttach;
+    FloatingActionButton btnAttach, btnWifi;
     LinearLayout atMap, atCamera, atVideo, atAudio, revealLayout;
     int cx,cy;
     Boolean hidden = true;
@@ -126,17 +114,19 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
     private ImageView recordButton, playButton;
     private Chronometer chronometer;
-    private Button backButton, okayButton,WiFibtn;
+    private Button backButton, okayButton;
     private TextView recordText;
 
     static String mCurrentMediaPath;
-    public static String tempImage=null,tempVideo=null, tempAudio=null ,response=null;
+    public static String tempImage=null,tempVideo=null, tempAudio=null ;
     Boolean isImage=false, isVideo=false, isAudio=false;
     String fileName = null;
 
-    public static KmlDocument kml ;
-    static File kmlFile;
-    String kmlName;
+    public static KmlDocument kml,kmlMain ;
+    static File kmlFile,kmlMainFile;
+    String kmlName, kmlMainName;
+    private static String totalChat, lastKey,response=null;
+    private static int total;
 
     RelativeLayout relativeLayout;
 
@@ -146,10 +136,9 @@ public class MainActivity extends AppCompatActivity {
 
     BroadcastReceiver mReceiver;
     IntentFilter mIntentFilter;
-    List<WifiP2pDevice>peers=new ArrayList<WifiP2pDevice>();
+    List<WifiP2pDevice> peers=new ArrayList<WifiP2pDevice>();
     String[] deviceNameArray;
     WifiP2pDevice[] deviceArray;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -221,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
         bot = new Bot("TBC",MagicStrings.root_path,"chat");
         chat = new Chat(bot);
     }
+
     private void connectPeers() {
         /*mManager.createGroup(mChannel, new WifiP2pManager.ActionListener() {
             @Override
@@ -229,7 +219,6 @@ public class MainActivity extends AppCompatActivity {
                 ServerTask server = new ServerTask(getApplicationContext());
                 server.execute();
             }
-
             @Override
             public void onFailure(int reason) {
             }
@@ -331,16 +320,14 @@ public class MainActivity extends AppCompatActivity {
             //Log.e("checkMediaAvailabili:", "image");
             boolean check = checkPath(tempImage,"image");
             if(check){
-                //fun(tempImage,"image");
-                replyImage();
+                fun(tempImage,"image");
             }
             isImage = false;
             tempImage = null;
         }
         if(isVideo){
             boolean check = checkPath(tempVideo,"video");
-            if(check) //fun(tempVideo,"video");
-                replyVideo();
+            if(check) fun(tempVideo,"video");
             isVideo = false;
             tempVideo = null;
         }
@@ -349,8 +336,7 @@ public class MainActivity extends AppCompatActivity {
             //Log.e("checkMediaAvailabili:", "tempAudio:- " + tempAudio);
             boolean check = checkPath(tempAudio,"audio");
             //Log.e("checkMediaAvailabili:", "check:- " + check);
-            if(check) //fun(tempAudio,"audio");
-                replyAudio();
+            if(check) fun(tempAudio,"audio");
             isAudio = false;
             tempAudio = null;
         }
@@ -409,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
                 //checkMediaAvailabilty();
             }
         });
-        WiFibtn.setOnClickListener(new View.OnClickListener() {
+        btnWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 discoverWifi();
@@ -500,9 +486,8 @@ public class MainActivity extends AppCompatActivity {
         listView = findViewById(R.id.listView);
         btnSend = findViewById(R.id.btnSend);
         edtTextMsg = findViewById(R.id.edtTextMsg);
-        //imageView = findViewById(R.id.imageView);
-        WiFibtn =findViewById(R.id.WiFibtn);
 
+        btnWifi = findViewById(R.id.btnWifi);
         btnAttach = findViewById(R.id.btnAttach);
         revealLayout = findViewById(R.id.reveal_items2);
         revealLayout.setVisibility(View.INVISIBLE);
@@ -513,17 +498,37 @@ public class MainActivity extends AppCompatActivity {
         atVideo = findViewById(R.id.atVideo);
         atAudio = findViewById(R.id.atAudio);
 
-        kmlName ="KML" + "USER_1" + ".kml";
-        kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/" + kmlName);
+        kmlName ="KMLDextor.kml";
+        kmlMainName = "KMLCentral.kml";
+        kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/SelfKml/" + kmlName);
+        kmlMainFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/WorkingKml/" + kmlMainName);
         kml = new KmlDocument();
+        kmlMain = new KmlDocument();
         if(!kmlFile.exists()){
             try {
                 kmlFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            kml.parseKMLFile(kmlFile);
+            kml.mKmlRoot.setExtendedData("total","0");
         }
-        kml.parseKMLFile(kmlFile);
+        else {
+            kml.parseKMLFile(kmlFile);
+        }
+        if(!kmlMainFile.exists()){
+            try {
+                kmlMainFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        kmlMain.parseKMLFile(kmlMainFile);
+        totalChat ="";
+        response="";
+        total = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
+        total++;
+        lastKey = getLatestKey();
 
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
@@ -578,7 +583,8 @@ public class MainActivity extends AppCompatActivity {
         String dummy;
         //Log.e("fun:- ", type + message);
         if(response==null) dummy = message;
-        else dummy=response + "-" + message;
+        else dummy=response + ":" + message;
+        totalChat += dummy + "-";
         if(type =="image"){
             message = "qwertyuu";
             replyImage();
@@ -605,10 +611,14 @@ public class MainActivity extends AppCompatActivity {
         //clear editText
         edtTextMsg.setText("");
         listView.setSelection(adapter.getCount()-1);
+
+        kml.mKmlRoot.setExtendedData("total",total + "");
+
         String uniqueId = generateRandomString();
-        String lastKey = getLatestKey();
-        String msg = ChatUtils.getExtendedDataFormatName(dummy,type,uniqueId);
+        String msg = ChatUtils.getExtendedDataFormatName(totalChat,total + "",uniqueId);
         kml.mKmlRoot.setExtendedData(lastKey,msg);
+        kmlMain.mKmlRoot.setExtendedData(lastKey,msg);
+        kmlMain.saveAsKML(kmlMainFile);
         kml.saveAsKML(kmlFile);
     }
 
@@ -623,7 +633,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private void CaptureImage(){
+    private void   CaptureImage(){
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, "262144");
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -819,7 +829,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static String getLatestKey(){
-        String nextKey = "source";
+        String nextKey = getSource(LoginActivity.userEmail) + "_" + LoginActivity.userPhoneNum;
         String msg;
         while (kml.mKmlRoot.mExtendedData!=null && kml.mKmlRoot.mExtendedData.containsKey(nextKey)){
             msg = kml.mKmlRoot.getExtendedData(nextKey);
@@ -830,6 +840,11 @@ public class MainActivity extends AppCompatActivity {
     private static String getTimeStampFromMsg(String msg){
         Pattern p = Pattern.compile("-");
         String[] s = p.split(msg,4);
+        return s[0];
+    }
+    private static String getSource(String msg){
+        Pattern p = Pattern.compile("@");
+        String[] s = p.split(msg,2);
         return s[0];
     }
 }

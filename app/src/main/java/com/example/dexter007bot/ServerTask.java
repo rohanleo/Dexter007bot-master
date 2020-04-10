@@ -13,6 +13,7 @@ import android.widget.Toast;
 import androidx.core.content.FileProvider;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,19 +36,22 @@ public class ServerTask extends AsyncTask<Void,Void,Void> {
         try {
             ServerSocket serverSocket = new ServerSocket(8988);
             Log.d(TAG, "Server: Socket opened");
-            Socket client = serverSocket.accept();
-            Toast.makeText(context, "Server: connection done",Toast.LENGTH_SHORT).show();
-            File dirs = Environment.getExternalStoragePublicDirectory("DextorBot/WifiReceived");
-            if (!dirs.exists())
-                dirs.mkdirs();
-            //String info= String.valueOf(client.getInetAddress().getAddress());
-            final File f = new File((Environment.getExternalStoragePublicDirectory("DextorBot/WifiReceived/")).toString()+"NewReceive");
-            f.createNewFile();
-            Log.d(TAG, "server: copying files " + f.toString());
-            InputStream inputstream = client.getInputStream();
-            copyFile(inputstream, new FileOutputStream(f));
+            Socket socket = serverSocket.accept();
+           // Toast.makeText(context, "Server: connection done",Toast.LENGTH_SHORT).show();
+
+            InputStream inputStream = socket.getInputStream();
+            String filename = "KMLReceive.kml";
+            FileOutputStream fileOutputStream = new FileOutputStream(Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename));
+            byte b[] = new byte[2048];
+            inputStream.read(b,0,b.length);
+            fileOutputStream.write(b,0,b.length);
             serverSocket.close();
-            Log.d(TAG, "File Recieved-" + f.getAbsolutePath());
+
+            //File source = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/WorkingKml/KMLCentral.kml");
+            //File dummy = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
+            //DiffUtils.createDiff(source,dummy);
+            //File delta = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/Diff/KMLReceive.diff");
+            //DiffUtils.applyPatch(source,delta);
             return null;
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
