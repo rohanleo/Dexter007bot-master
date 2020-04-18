@@ -5,12 +5,12 @@ import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 import ie.wombat.jbdiff.JBDiff;
 import ie.wombat.jbdiff.JBPatch;
@@ -35,8 +35,7 @@ public class DiffUtils {
             File destination = getDestinationFile(delta);
             try {
                 JBPatch.bspatch(source, destination, delta);
-                FileUtils.forceDelete(delta);
-                //Log.d("DIffUtils",delta.getAbsolutePath());
+                Log.d("DIffUtils",delta.getAbsolutePath());
                 //MapFragment.parseKml(app,context);
                 return true;
             }
@@ -49,19 +48,22 @@ public class DiffUtils {
     }
 
     private static String getDeltaName(File source) throws IOException {
-        File diffDir = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/Diff");
         KmlDocument kml = new KmlDocument();
         kml.parseKMLFile(source);
-        //String name = FilenameUtils.getBaseName(source.getName());
         String name = FilenameUtils.getBaseName(source.getName());
-        //int version = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
-        return name + ".diff";
-        //return name+"_"+version+".diff";
-        //return "dummy.diff";
+        int version = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
+        return name+"_"+version+".diff";
     }
 
     private static File getDestinationFile(File delta){
         String deltaName = FilenameUtils.getBaseName(delta.getName());
-        return Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/WorkingKml/"+deltaName+".kml");
+        String name = getname(deltaName);
+        return Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/"+name+".kml");
+    }
+
+    private static String getname(String deltaName) {
+        Pattern p =Pattern.compile("_");
+        String [] s = p.split(deltaName,4);
+        return s[0] + "_" + s[1]+ "_" + s[2];
     }
 }

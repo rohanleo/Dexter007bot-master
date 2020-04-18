@@ -1,19 +1,15 @@
-package com.example.dexter007bot;
+package com.example.dexter007bot.TCP;
 
-import android.content.ContentResolver;
 import android.content.Context;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileInputStream;
+import com.example.dexter007bot.Connection.Ip;
+
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
@@ -28,7 +24,7 @@ public class ClientTask extends AsyncTask<Void,Void,Void> {
 
     @Override
     protected void onPostExecute(Void aVoid) {
-        Toast.makeText(context, "File sent", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(context, "File sent", Toast.LENGTH_SHORT).show();
     }
 
     public ClientTask(Context context, String host) {
@@ -41,17 +37,15 @@ public class ClientTask extends AsyncTask<Void,Void,Void> {
         int port =8988;
         int len;
         Socket socket = new Socket();
-        byte buf[] = new byte[2048];
         try {
             socket.bind(null);
             socket.connect((new InetSocketAddress(host, port)), 500);
 
-            String filename = "KMLCentral.kml";
-            FileInputStream fileInputStream = new FileInputStream(Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/WorkingKml/" + filename));
-            fileInputStream.read(buf,0,buf.length);
-            OutputStream outputStream = socket.getOutputStream();
-            outputStream.write(buf,0,buf.length);
-            outputStream.close();
+            String ip = Ip.ipadd();
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
+            PrintWriter printWriter = new PrintWriter(outputStreamWriter);
+            outputStreamWriter.write(ip);
+            outputStreamWriter.flush();
         } catch (FileNotFoundException e) {
             //catch logic
         } catch (IOException e) {

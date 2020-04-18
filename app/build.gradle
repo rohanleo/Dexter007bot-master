@@ -27,6 +27,11 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation files('libs/Ab.jar')
+    implementation files('libs/activation-1.1.1.jar')
+    implementation files('libs/nanohttpd-2.1.1.jar')
+    implementation files('libs/nanohttpd-webserver-2.1.1.jar')
+    implementation files('libs/org.apache.commons.io.jar')
+
     implementation 'com.google.android.material:material:1.1.0'
     implementation 'me.himanshusoni.chatmessageview:chat-message-view:1.0.3'
     //////////////////////////////////////////////////////////
@@ -56,6 +61,6 @@ dependencies {
     //Diff
     //implementation files('libs/jbdiff.jar')
     implementation group: 'io.takari', name: 'jbdiff', version: '1.0.1'
-    implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+    //implementation group: 'commons-io', name: 'commons-io', version: '2.6'
 
 }

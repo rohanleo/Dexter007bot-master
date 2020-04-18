@@ -1,48 +1,36 @@
 package com.example.dexter007bot;
 
-import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
-import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 
-import com.example.dexter007bot.AIML.sample;
 import com.example.dexter007bot.Chats.ChatUtils;
+import com.example.dexter007bot.Connection.PeerConnection;
+import com.example.dexter007bot.Connection.WiFiDirect;
 import com.example.dexter007bot.Maps.MapActivity;
-import com.example.dexter007bot.Maps.SavedActivity;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.javiersantos.materialstyleddialogs.enums.Duration;
 import com.github.javiersantos.materialstyleddialogs.enums.Style;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewAnimationUtils;
-import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.Chronometer;
@@ -50,7 +38,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,25 +45,18 @@ import android.widget.Toast;
 import com.example.dexter007bot.Adapter.ChatMessageAdapter;
 import com.example.dexter007bot.Model.ChatMessage;
 
-import org.alicebot.ab.AIMLProcessor;
 import org.alicebot.ab.Bot;
 import org.alicebot.ab.Chat;
 import org.alicebot.ab.MagicStrings;
-import org.alicebot.ab.PCAIMLProcessorExtension;
 import org.osmdroid.bonuspack.kml.KmlDocument;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.math.BigInteger;
-import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
@@ -92,16 +72,6 @@ public class MainActivity extends AppCompatActivity {
     public static ChatMessageAdapter adapter;
     public static ArrayList<String>al = new ArrayList<String>();
     //public static String id;
-    public static final int MULTIPLE_PERMISSIONS = 10;
-    private final String[] permissions = new String[]{
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.ACCESS_WIFI_STATE,
-            Manifest.permission.CHANGE_WIFI_STATE};
 
     FloatingActionButton btnAttach, btnWifi;
     LinearLayout atMap, atCamera, atVideo, atAudio, revealLayout;
@@ -120,25 +90,22 @@ public class MainActivity extends AppCompatActivity {
     static String mCurrentMediaPath;
     public static String tempImage=null,tempVideo=null, tempAudio=null ;
     Boolean isImage=false, isVideo=false, isAudio=false;
-    String fileName = null;
 
-    public static KmlDocument kml,kmlMain ;
-    static File kmlFile,kmlMainFile;
-    String kmlName, kmlMainName;
+    public static KmlDocument kml;
+    public static File kmlFile;
+    String kmlName;
     private static String totalChat, lastKey,response=null;
     private static int total;
 
     RelativeLayout relativeLayout;
 
-    WifiManager wifiManager;
+    public static WifiManager wifiManager;
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
+    PeerConnection peerConnection;
 
-    BroadcastReceiver mReceiver;
+    WiFiDirect mReceiver;
     IntentFilter mIntentFilter;
-    List<WifiP2pDevice> peers=new ArrayList<WifiP2pDevice>();
-    String[] deviceNameArray;
-    WifiP2pDevice[] deviceArray;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,199 +114,65 @@ public class MainActivity extends AppCompatActivity {
 
         initialize();
 
-        AddDirectory.addDirectory();
-
-        if(!hasPermissions(this,permissions)){
-            ActivityCompat.requestPermissions(this,permissions,MULTIPLE_PERMISSIONS);
-        }
-
         adapter = new ChatMessageAdapter(this,new ArrayList<ChatMessage>());
         listView.setAdapter(adapter);
 
         onclickListener();
 
-        boolean available = isSDCardAvailable();
-
-        AssetManager assets = getResources().getAssets();
-        String out1= Environment.getExternalStorageDirectory().getAbsolutePath();
-        File fileName = new File(out1 + "/TBC/bots/TBC");
-        boolean makeFile = fileName.mkdirs();
-
-        if (fileName.exists()) {
-
-            //read the line
-            try {
-
-                for (String dir : assets.list("TBC")) {
-
-                    File subDir = new File(fileName.getPath() + "/" + dir);
-                    boolean subDir_Check = subDir.mkdirs();
-
-                    for (String file : assets.list("TBC/" + dir)) {
-                        File newFile = new File(fileName.getPath() + "/" + dir +"/" + file);
-
-                        if(newFile.exists()){
-                            continue;
-                        }
-                        InputStream in;
-                        OutputStream out;
-                        String str;
-                        in = assets.open("TBC/" + dir +"/" + file);
-                        out = new FileOutputStream(fileName.getPath() + "/" + dir +"/" + file);
-
-                        // copy files from assets to the mobile or any secondary storage
-
-                        copyFile(in,out);
-                        in.close();
-                        out.flush();
-                        out.close();
-
-                    }
-                }
-            }catch (IOException e){
-                e.printStackTrace();
-            }
-        }
-
-        // get the working directory
-        MagicStrings.root_path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/TBC";
-        AIMLProcessor.extension = new PCAIMLProcessorExtension();
-
-        AIMLProcessor.extension= new sample();
-
         bot = new Bot("TBC",MagicStrings.root_path,"chat");
         chat = new Chat(bot);
     }
 
-    private void connectPeers() {
-        /*mManager.createGroup(mChannel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Toast.makeText(MainActivity.this, "Group Formed", Toast.LENGTH_SHORT).show();
-                ServerTask server = new ServerTask(getApplicationContext());
-                server.execute();
-            }
-            @Override
-            public void onFailure(int reason) {
-            }
-        });*/
-        for(WifiP2pDevice curr: deviceArray) {
-            final WifiP2pDevice device = curr;
-            WifiP2pConfig config = new WifiP2pConfig();
-            config.deviceAddress = device.deviceAddress;
-            //System.out.println(device.deviceName);
-            mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-                    Toast.makeText(MainActivity.this, "Connected to: " + device.deviceName, Toast.LENGTH_SHORT).show();
-                }
+    private void initialize() {
+        relativeLayout = findViewById(R.id.relative);
+        listView = findViewById(R.id.listView);
+        btnSend = findViewById(R.id.btnSend);
+        edtTextMsg = findViewById(R.id.edtTextMsg);
 
-                @Override
-                public void onFailure(int reason) {
-                    Toast.makeText(MainActivity.this, "Not Connected", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-    }
+        btnWifi = findViewById(R.id.btnWifi);
+        btnAttach = findViewById(R.id.btnAttach);
+        revealLayout = findViewById(R.id.reveal_items2);
+        revealLayout.setVisibility(View.INVISIBLE);
+        cx = revealLayout.getRight();
+        cy =  revealLayout.getBottom();
+        atCamera = findViewById(R.id.atCamera);
+        atMap = findViewById(R.id.atMap);
+        atVideo = findViewById(R.id.atVideo);
+        atAudio = findViewById(R.id.atAudio);
 
-    public void discoverWifi() {
-        if(!wifiManager.isWifiEnabled()) {
-            Toast.makeText(this, "Enable WiFi", Toast.LENGTH_SHORT).show();
-            return;
+        kmlName ="KML_" + LoginActivity.userName + ".kml";
+        kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/SelfKml/" + kmlName);
+        kml = new KmlDocument();
+        if(!kmlFile.exists()){
+            try {
+                kmlFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            kml.parseKMLFile(kmlFile);
+            kml.mKmlRoot.setExtendedData("total","0");
+            kml.saveAsKML(kmlFile);
         }
-        mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-                Toast.makeText(MainActivity.this, "Discovering Peers", Toast.LENGTH_SHORT).show();
-                if(mManager!=null) {
-                    mManager.requestPeers(mChannel, peerListListener);
-                }
-            }
-            @Override
-            public void onFailure(int reason) {
-                Toast.makeText(MainActivity.this,"Discovering Failed",Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-    WifiP2pManager.PeerListListener peerListListener =new WifiP2pManager.PeerListListener() {
-        @Override
-        public void onPeersAvailable(WifiP2pDeviceList peerList) {
-            if(!peerList.getDeviceList().equals(peers)){
-                peers.clear();
-                peers.addAll(peerList.getDeviceList());
+        else {
+            kml.parseKMLFile(kmlFile);
+        }
+        totalChat ="";
+        response="";
+        total = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
+        total++;
+        lastKey = getLatestKey();
 
-                deviceNameArray = new String[peerList.getDeviceList().size()];
-                deviceArray= new WifiP2pDevice[peerList.getDeviceList().size()];
-                //System.out.println("DeviceArrayCreated");
-                int index=0;
-                for(WifiP2pDevice device: peerList.getDeviceList()) {
-                    deviceNameArray[index] = device.deviceName;
-                    System.out.println(deviceNameArray[index]);
-                    deviceArray[index] = device;
-                    index++;
-                }
-            }
-            if(peers.size()==0){
-                Toast.makeText(MainActivity.this, "No Device Found", Toast.LENGTH_SHORT).show();
-            }
-            else connectPeers();
-        }
-    };
-    WifiP2pManager.ConnectionInfoListener connectionInfoListener = new WifiP2pManager.ConnectionInfoListener() {
-        @Override
-        public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
-            final InetAddress groupOwnerAddress = wifiP2pInfo.groupOwnerAddress;
-            if(wifiP2pInfo.groupFormed && wifiP2pInfo.isGroupOwner){
-                Toast.makeText(MainActivity.this, "Host", Toast.LENGTH_SHORT).show();
-                ServerTask server = new ServerTask(getApplicationContext());
-                server.execute();
-            }
-            else if(wifiP2pInfo.groupFormed){
-                Toast.makeText(MainActivity.this, "Client", Toast.LENGTH_SHORT).show();
-                ClientTask client =new ClientTask(getApplicationContext(),groupOwnerAddress.getHostAddress());
-                client.execute();
-            }
-        }
-    };
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        checkMediaAvailabilty();
-        registerReceiver(mReceiver,mIntentFilter);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(mReceiver);
-    }
-
-    private void checkMediaAvailabilty() {
-        if(isImage){
-            //Log.e("checkMediaAvailabili:", "image");
-            boolean check = checkPath(tempImage,"image");
-            if(check){
-                fun(tempImage,"image");
-            }
-            isImage = false;
-            tempImage = null;
-        }
-        if(isVideo){
-            boolean check = checkPath(tempVideo,"video");
-            if(check) fun(tempVideo,"video");
-            isVideo = false;
-            tempVideo = null;
-        }
-        if(isAudio){
-            //Log.e("checkMediaAvailabili:", "audio" + isAudio);
-            //Log.e("checkMediaAvailabili:", "tempAudio:- " + tempAudio);
-            boolean check = checkPath(tempAudio,"audio");
-            //Log.e("checkMediaAvailabili:", "check:- " + check);
-            if(check) fun(tempAudio,"audio");
-            isAudio = false;
-            tempAudio = null;
-        }
+        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
+        mChannel = mManager.initialize(this,getMainLooper(),null);
+        mReceiver = new WiFiDirect(mManager,mChannel,this);
+        peerConnection = new PeerConnection(mManager, mChannel, this);
+        mIntentFilter = new IntentFilter();
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
+        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
     }
 
     private void onclickListener() {
@@ -398,14 +231,54 @@ public class MainActivity extends AppCompatActivity {
         btnWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                discoverWifi();
+                peerConnection.Discover();
             }
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkMediaAvailabilty();
+        registerReceiver(mReceiver,mIntentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mReceiver);
+    }
+
+    private void checkMediaAvailabilty() {
+        if(isImage){
+            //Log.e("checkMediaAvailabili:", "image");
+            boolean check = checkPath(tempImage,"image");
+            if(check){
+                fun(tempImage,"image");
+            }
+            isImage = false;
+            tempImage = null;
+        }
+        if(isVideo){
+            boolean check = checkPath(tempVideo,"video");
+            if(check) fun(tempVideo,"video");
+            isVideo = false;
+            tempVideo = null;
+        }
+        if(isAudio){
+            //Log.e("checkMediaAvailabili:", "audio" + isAudio);
+            //Log.e("checkMediaAvailabili:", "tempAudio:- " + tempAudio);
+            boolean check = checkPath(tempAudio,"audio");
+            //Log.e("checkMediaAvailabili:", "check:- " + check);
+            if(check) fun(tempAudio,"audio");
+            isAudio = false;
+            tempAudio = null;
+        }
+    }
+
     private boolean checkPath(String fileName, String type) {
         if(type.equals("image")){
-            File image=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/" + fileName);
+            File image=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/Image/" + fileName);
             //System.out.print("checkPath:-image  " + tempImage + " " + fileName);
             if(!image.exists()){
                 //System.out.println(" false" );
@@ -413,14 +286,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         else if(type.equals("video")){
-            File video=Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/" + fileName);
+            File video=Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/Video/" + fileName);
             //System.out.print("checkPath:-video  " + tempVideo + " " + fileName);
             if(!video.exists()){
                 return false;
             }
         }
         else if(type.equals("audio")){
-            File audio=Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/" + fileName);
+            File audio=Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/Audio/" + fileName);
             //Log.e("CheckPath: ", "audio fileName:- " + fileName);
             if(!audio.exists()){
                 return false;
@@ -479,80 +352,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }
-    }
-
-    private void initialize() {
-        relativeLayout = findViewById(R.id.relative);
-        listView = findViewById(R.id.listView);
-        btnSend = findViewById(R.id.btnSend);
-        edtTextMsg = findViewById(R.id.edtTextMsg);
-
-        btnWifi = findViewById(R.id.btnWifi);
-        btnAttach = findViewById(R.id.btnAttach);
-        revealLayout = findViewById(R.id.reveal_items2);
-        revealLayout.setVisibility(View.INVISIBLE);
-        cx = revealLayout.getRight();
-        cy =  revealLayout.getBottom();
-        atCamera = findViewById(R.id.atCamera);
-        atMap = findViewById(R.id.atMap);
-        atVideo = findViewById(R.id.atVideo);
-        atAudio = findViewById(R.id.atAudio);
-
-        kmlName ="KMLDextor.kml";
-        kmlMainName = "KMLCentral.kml";
-        kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/SelfKml/" + kmlName);
-        kmlMainFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/WorkingKml/" + kmlMainName);
-        kml = new KmlDocument();
-        kmlMain = new KmlDocument();
-        if(!kmlFile.exists()){
-            try {
-                kmlFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            kml.parseKMLFile(kmlFile);
-            kml.mKmlRoot.setExtendedData("total","0");
-        }
-        else {
-            kml.parseKMLFile(kmlFile);
-        }
-        if(!kmlMainFile.exists()){
-            try {
-                kmlMainFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        kmlMain.parseKMLFile(kmlMainFile);
-        totalChat ="";
-        response="";
-        total = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
-        total++;
-        lastKey = getLatestKey();
-
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        mChannel = mManager.initialize(this,getMainLooper(),null);
-        mReceiver = new WiFiDirect(mManager,mChannel,this);
-        mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-    }
-
-
-    private void copyFile(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[1024];
-        int read;
-
-        while((read = in.read(buffer))!=-1){
-            out.write(buffer,0,read);
-        }
-    }
-
-    public static boolean isSDCardAvailable() {
-        return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)? true: false;
     }
 
     private static void botsReply(String response) {
@@ -617,28 +416,15 @@ public class MainActivity extends AppCompatActivity {
         String uniqueId = generateRandomString();
         String msg = ChatUtils.getExtendedDataFormatName(totalChat,total + "",uniqueId);
         kml.mKmlRoot.setExtendedData(lastKey,msg);
-        kmlMain.mKmlRoot.setExtendedData(lastKey,msg);
-        kmlMain.saveAsKML(kmlMainFile);
         kml.saveAsKML(kmlFile);
-    }
-
-    public boolean hasPermissions(Context context, String... permissions){
-        if(context!=null && permissions!=null ){
-            for(String permission:permissions){
-                if(ActivityCompat.checkSelfPermission(context,permission)!=PackageManager.PERMISSION_GRANTED){
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     private void   CaptureImage(){
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, "262144");
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String fileName = "IMG" + timeStamp + "_" + generateRandomString() + ".jpg";
-        String path="DextorBot/DextorImage/";
+        String fileName = "IMG" + timeStamp + "_" + LoginActivity.userName + ".jpg";
+        String path="DextorBot/DextorImage/Image/";
         File image = Environment.getExternalStoragePublicDirectory(path + fileName);
         Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", image);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
@@ -653,8 +439,8 @@ public class MainActivity extends AppCompatActivity {
     private void RecordVideo() {
         Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String fileName = "VID" + timeStamp + "_" + generateRandomString() + ".mp4";
-        String path = "DextorBot/DextorVideo/";
+        String fileName = "VID" + timeStamp + "_" + LoginActivity.userName+ ".mp4";
+        String path = "DextorBot/DextorVideo/Video/";
         File video = Environment.getExternalStoragePublicDirectory(path + fileName);
         Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", video);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
@@ -690,8 +476,8 @@ public class MainActivity extends AppCompatActivity {
         recorder = null;
 
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        final String fileName ="AUD" + "_" + timeStamp + "_" + generateRandomString() + ".mp3";
-        String path = "DextorBot/DextorAudio/";
+        final String fileName ="AUD" + "_" + timeStamp + "_" + LoginActivity.userName + ".mp3";
+        String path = "DextorBot/DextorAudio/Audio/";
         final String finalFilePath = Environment.getExternalStoragePublicDirectory(path + fileName).getAbsolutePath();
         tempAudio = fileName;
         mCurrentMediaPath = finalFilePath;
@@ -829,7 +615,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static String getLatestKey(){
-        String nextKey = getSource(LoginActivity.userEmail) + "_" + LoginActivity.userPhoneNum;
+        String nextKey = LoginActivity.userName;
         String msg;
         while (kml.mKmlRoot.mExtendedData!=null && kml.mKmlRoot.mExtendedData.containsKey(nextKey)){
             msg = kml.mKmlRoot.getExtendedData(nextKey);
@@ -840,11 +626,6 @@ public class MainActivity extends AppCompatActivity {
     private static String getTimeStampFromMsg(String msg){
         Pattern p = Pattern.compile("-");
         String[] s = p.split(msg,4);
-        return s[0];
-    }
-    private static String getSource(String msg){
-        Pattern p = Pattern.compile("@");
-        String[] s = p.split(msg,2);
         return s[0];
     }
 }

@@ -47,7 +47,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.dexter007bot.MainActivity.kml;
-import static com.example.dexter007bot.MainActivity.kmlMain;
 
 public class MapActivity extends AppCompatActivity implements MapEventsReceiver {
 
@@ -83,8 +82,6 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
             public void onClick(View v) {
                 kml.mKmlRoot.addOverlay(polygon,kml);
                 kml.mKmlRoot.addOverlay(marker,kml);
-                kmlMain.mKmlRoot.addOverlay(polygon,kmlMain);
-                kmlMain.mKmlRoot.addOverlay(marker,kmlMain);
                 long millis = System.currentTimeMillis();
                 //File localFile = kmlDocument.getDefaultPathForAndroid("KML_" + millis + ".kml");
                 //Log.d("path",localFile.getAbsolutePath());
