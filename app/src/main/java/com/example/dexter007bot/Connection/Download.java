@@ -1,8 +1,11 @@
 package com.example.dexter007bot.Connection;
 
 import android.os.Environment;
+import android.util.Log;
 
 import com.example.dexter007bot.DiffUtils;
+import com.example.dexter007bot.FileManager;
+import com.google.gson.Gson;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -15,22 +18,25 @@ import java.util.regex.Pattern;
 
 public class Download implements Runnable{
 
-    String link;
+    String link,IP;
     File out;
 
-    public Download(String link, File out)
+    public Download(String link, File out, String IP)
     {
         this.link=link;
         this.out=out;
+        this.IP=IP;
     }
 
     @Override
     public void run()
     {
         try {
-
+            FileManager fileManager = new FileManager();
             URL url = new URL(link);
             HttpURLConnection http = (HttpURLConnection)url.openConnection();
+            double filesize = http.getContentLength();
+            String filename = out.getName();
             BufferedInputStream in = new BufferedInputStream(http.getInputStream());
             FileOutputStream fos;
 
@@ -43,9 +49,10 @@ public class Download implements Runnable{
             }
 
             in.skip(out.length());
+
             BufferedOutputStream bout = new BufferedOutputStream(fos,1024);
             byte[] buffer = new byte[1024];
-            double downloaded = 0.0;
+            double downloaded = out.length();
             int read = 0;
             double perecentdownloaded =0.0;
             while((read = in.read(buffer,0,1024)) >=0)
@@ -54,65 +61,81 @@ public class Download implements Runnable{
                 downloaded+= read;
 
             }
-
+            perecentdownloaded = (downloaded/filesize)*100;
             bout.close();
             in.close();
+            if(downloaded!=filesize){
+                fileManager.updateFilesFromSubfolders(out,IP,filesize,perecentdownloaded);
+                fileManager.removeDeletedFiles();
+                fileManager.writeDB();
+            }else{
+                File newOut = null;
+                if(filename.startsWith("IMG")){
+                    newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/ReceivedImage/" + filename);
+                    if(!newOut.exists())FileUtils.copyFile(out,newOut);
+                    fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
+                    fileManager.removeDeletedFiles();
+                    fileManager.writeDB();
+                }else if(filename.startsWith("VID")){
+                    newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/ReceivedVideo/" + filename);
+                    if(!newOut.exists())FileUtils.copyFile(out,newOut);
+                    fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
+                    fileManager.removeDeletedFiles();
+                    fileManager.writeDB();
+                }else if(filename.startsWith("AUD")){
+                    newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/ReceivedAudio/" + filename);
+                    if(!newOut.exists())FileUtils.copyFile(out,newOut);
+                    fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
+                    fileManager.removeDeletedFiles();
+                    fileManager.writeDB();
+                }else if(filename.startsWith("KML")){
+
+                    String filebasename = FilenameUtils.getBaseName(out.getName());
+                    File oldFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
+                    newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
+                    try {
+                        if(!newOut.exists()){
+                            FileUtils.copyFile(out,newOut);
+                            fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
+                            fileManager.removeDeletedFiles();
+                            fileManager.writeDB();
+                        }else {
+                            DiffUtils.createDiff(oldFile,out);
+
+                            File deltaList = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/Diff");
+                            File delta = null;
+                            for(File file : deltaList.listFiles()){
+                                //System.out.println(file.getName());
+                                if(file.getName().contains(filebasename)){
+                                    delta = file;
+                                    break;
+                                }
+                            }
+
+                            int newVersion = Integer.parseInt(getVersion(FilenameUtils.getBaseName(delta.getName())));
+                            KmlDocument kml = new KmlDocument();
+                            kml.parseKMLFile(oldFile);
+                            int oldVersion = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
+                            if(oldVersion<newVersion){
+                                DiffUtils.applyPatch(oldFile,delta);
+                                File newVersionCre = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/" + filename);
+                                FileUtils.forceDelete(oldFile);
+                                File dummy = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
+                                FileUtils.copyFile(newVersionCre,dummy);
+                                FileUtils.forceDelete(newVersionCre);
+                            }
+                            FileUtils.forceDelete(delta);
+
+                        }
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                FileUtils.forceDelete(out);
+            }
 
             System.out.println("Work Done");
-
-            if(out.getName().contains(".kml")){
-
-                String filename = out.getName();
-                String filebasename = FilenameUtils.getBaseName(out.getName());
-                File newFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/WorkingKml/" + filename);
-                File oldFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
-
-                try {
-                    if(!oldFile.exists()){
-                        FileUtils.copyFile(newFile,oldFile);
-                       // System.out.println("Old file not existed" + filename);
-                        FileUtils.forceDelete(newFile);
-                        return;
-                    }
-
-                    DiffUtils.createDiff(oldFile,newFile);
-
-                    //System.out.println("Diff generated");
-
-                    File deltaList = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/Diff");
-                    File delta = null;
-                    for(File file : deltaList.listFiles()){
-                        //System.out.println(file.getName());
-                        if(file.getName().contains(filebasename)){
-                            delta = file;
-                            break;
-                        }
-                    }
-
-                    //System.out.println("Checking diff");
-                    //KmlDocument kmlDocument = new KmlDocument();
-                    //kmlDocument.parseKMLFile(newFile);
-                    //int newVersion = Integer.parseInt(kmlDocument.mKmlRoot.getExtendedData("total"));
-                    int newVersion = Integer.parseInt(getVersion(FilenameUtils.getBaseName(delta.getName())));
-                    KmlDocument kml = new KmlDocument();
-                    kml.parseKMLFile(oldFile);
-                    int oldVersion = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
-                    if(oldVersion<newVersion){
-                        DiffUtils.applyPatch(oldFile,delta);
-                        File newVersionCre = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/" + filename);
-                        FileUtils.forceDelete(oldFile);
-                        File oldFilech = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
-                        FileUtils.copyFile(newVersionCre,oldFilech);
-                        FileUtils.forceDelete(newVersionCre);
-                    }
-                    FileUtils.forceDelete(delta);
-                    FileUtils.forceDelete(newFile);
-                    //System.out.println("Diff Applied");
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
 
         }
 

@@ -133,14 +133,14 @@ public class client implements Runnable{
             fileURL = "http:/" + IP + ":8080/get?name=" + x;
 
             if(x.contains(".kml")){
-                saveDir = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/WorkingKml/" + x));
+                saveDir = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/Working/Kml/" + x));
                 //Log.e("Client",x);
             }else if(x.contains(".jpg")){
-                saveDir = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/ReceivedImage/"+ x));
+                saveDir = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/Working/Image/"+ x));
             }else if(x.contains(".mp4")){
-                saveDir = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/ReceivedVideo/"+ x));
+                saveDir = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/Working/Video/"+ x));
             }else if(x.contains(".mp3")){
-                saveDir = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/ReceivedAudio/"+ x));
+                saveDir = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/Working/Audio/"+ x));
             }
             //saveDir = Environment.getExternalStorageDirectory().getAbsolutePath()+"/test/"+x;
 
@@ -148,11 +148,10 @@ public class client implements Runnable{
 
             File out = new File(saveDir);
 
-            new Thread(new Download(fileURL, out)).start();
+            new Thread(new Download(fileURL, out,IP)).start();
 
 
         }
-
 
 
         try {

@@ -423,7 +423,7 @@ public class MainActivity extends AppCompatActivity {
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, "262144");
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String fileName = "IMG" + timeStamp + "_" + LoginActivity.userName + ".jpg";
+        String fileName = "IMG" +  "_" + LoginActivity.userName +"_"+timeStamp + ".jpg";
         String path="DextorBot/DextorImage/Image/";
         File image = Environment.getExternalStoragePublicDirectory(path + fileName);
         Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", image);
@@ -439,7 +439,7 @@ public class MainActivity extends AppCompatActivity {
     private void RecordVideo() {
         Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String fileName = "VID" + timeStamp + "_" + LoginActivity.userName+ ".mp4";
+        String fileName = "VID" +  "_" + LoginActivity.userName+"_" +timeStamp +".mp4";
         String path = "DextorBot/DextorVideo/Video/";
         File video = Environment.getExternalStoragePublicDirectory(path + fileName);
         Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", video);
@@ -476,7 +476,7 @@ public class MainActivity extends AppCompatActivity {
         recorder = null;
 
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        final String fileName ="AUD" + "_" + timeStamp + "_" + LoginActivity.userName + ".mp3";
+        final String fileName ="AUD" + "_" +  LoginActivity.userName + timeStamp + "_" + ".mp3";
         String path = "DextorBot/DextorAudio/Audio/";
         final String finalFilePath = Environment.getExternalStoragePublicDirectory(path + fileName).getAbsolutePath();
         tempAudio = fileName;

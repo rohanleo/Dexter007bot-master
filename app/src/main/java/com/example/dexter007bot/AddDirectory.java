@@ -3,13 +3,18 @@ package com.example.dexter007bot;
 import android.os.Environment;
 
 import java.io.File;
+import java.io.IOException;
 
 public class AddDirectory {
     private static File dextorBot= Environment.getExternalStoragePublicDirectory("DextorBot");
+    private static File working = Environment.getExternalStoragePublicDirectory("DextorBot/Working");
+    private static File workingKml = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Kml");
+    private static File workingImage = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Image");
+    private static File workingVideo = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Video");
+    private static File workingAudio = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Audio");
     private static File kmlDir=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml");
     private static File receiveKml=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml");
     private static File selfKml=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/SelfKml");
-    private static File WorkKml=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/WorkingKml");
     private static File diff=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/Diff");
     private static File imageDir=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/Image");
     private static File image=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage");
@@ -23,13 +28,17 @@ public class AddDirectory {
 
     public static void addDirectory(){
         if(!dextorBot.exists()) dextorBot.mkdir();
+        if(!working.exists()) working.mkdir();
+        if(!workingKml.exists()) workingKml.mkdir();
+        if(!workingImage.exists()) workingImage.mkdir();
+        if(!workingVideo.exists()) workingVideo.mkdir();
+        if(!workingAudio.exists()) workingAudio.mkdir();
         if(!kmlDir.exists()) kmlDir.mkdir();
         if(!image.exists()) image.mkdir();
         if(!video.exists()) video.mkdir();
         if(!audio.exists()) audio.mkdir();
         if(!receiveKml.exists()) receiveKml.mkdir();
         if(!selfKml.exists()) selfKml.mkdir();
-        if(!WorkKml.exists()) WorkKml.mkdir();
         if(!diff.exists()) diff.mkdir();
         if(!imageDir.exists()) imageDir.mkdir();
         if(!rcvimageDir.exists()) rcvimageDir.mkdir();

@@ -133,6 +133,7 @@ public class PeerConnection {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
+                if(socket!=null)
                 socket.close();
             }
         }
@@ -156,6 +157,7 @@ public class PeerConnection {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
+                if(socket!=null)
                 socket.close();
             }
         }
