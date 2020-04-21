@@ -249,6 +249,12 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(mReceiver);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+    }
+
     private void checkMediaAvailabilty() {
         if(isImage){
             //Log.e("checkMediaAvailabili:", "image");

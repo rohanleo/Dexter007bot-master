@@ -1,11 +1,10 @@
 package com.example.dexter007bot.Connection;
 
 import android.os.Environment;
-import android.util.Log;
 
 import com.example.dexter007bot.DiffUtils;
-import com.example.dexter007bot.FileManager;
-import com.google.gson.Gson;
+import com.example.dexter007bot.SummaryVector.FileManager;
+import com.example.dexter007bot.SummaryVector.ReceivedDetailsLog;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -32,7 +31,9 @@ public class Download implements Runnable{
     public void run()
     {
         try {
-            FileManager fileManager = new FileManager();
+            //client.downloadCompleted=false;
+            FileManager fileManager = new FileManager(FilenameUtils.getBaseName(out.getName())+ ".json");
+            //FileManager fileManager = new FileManager("ReceivedDetails_Log.json");
             URL url = new URL(link);
             HttpURLConnection http = (HttpURLConnection)url.openConnection();
             double filesize = http.getContentLength();
@@ -66,28 +67,18 @@ public class Download implements Runnable{
             in.close();
             if(downloaded!=filesize){
                 fileManager.updateFilesFromSubfolders(out,IP,filesize,perecentdownloaded);
-                fileManager.removeDeletedFiles();
-                fileManager.writeDB();
+                fileManager.writeDB(fileManager.fileTable,fileManager.DATABASE_PATH);
             }else{
                 File newOut = null;
                 if(filename.startsWith("IMG")){
                     newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/ReceivedImage/" + filename);
                     if(!newOut.exists())FileUtils.copyFile(out,newOut);
-                    fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
-                    fileManager.removeDeletedFiles();
-                    fileManager.writeDB();
                 }else if(filename.startsWith("VID")){
                     newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/ReceivedVideo/" + filename);
                     if(!newOut.exists())FileUtils.copyFile(out,newOut);
-                    fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
-                    fileManager.removeDeletedFiles();
-                    fileManager.writeDB();
                 }else if(filename.startsWith("AUD")){
                     newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/ReceivedAudio/" + filename);
                     if(!newOut.exists())FileUtils.copyFile(out,newOut);
-                    fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
-                    fileManager.removeDeletedFiles();
-                    fileManager.writeDB();
                 }else if(filename.startsWith("KML")){
 
                     String filebasename = FilenameUtils.getBaseName(out.getName());
@@ -96,9 +87,6 @@ public class Download implements Runnable{
                     try {
                         if(!newOut.exists()){
                             FileUtils.copyFile(out,newOut);
-                            fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
-                            fileManager.removeDeletedFiles();
-                            fileManager.writeDB();
                         }else {
                             DiffUtils.createDiff(oldFile,out);
 
@@ -133,10 +121,10 @@ public class Download implements Runnable{
                     }
                 }
                 FileUtils.forceDelete(out);
+                fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
+                fileManager.writeDB(fileManager.fileTable,fileManager.DATABASE_PATH);
             }
-
-            System.out.println("Work Done");
-
+            new Thread(new ReceivedDetailsLog()).start();
         }
 
         catch(IOException ex)

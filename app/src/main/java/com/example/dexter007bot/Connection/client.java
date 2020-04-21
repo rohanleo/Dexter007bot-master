@@ -3,6 +3,7 @@ package com.example.dexter007bot.Connection;
 import android.os.Environment;
 
 import com.example.dexter007bot.Connection.Download;
+import com.example.dexter007bot.SummaryVector.ReceivedDetailsLog;
 
 import java.io.BufferedReader;
 import java.io.File;

@@ -7,6 +7,7 @@ import java.io.IOException;
 
 public class AddDirectory {
     private static File dextorBot= Environment.getExternalStoragePublicDirectory("DextorBot");
+    private static File log= Environment.getExternalStoragePublicDirectory("DextorBot/Log");
     private static File working = Environment.getExternalStoragePublicDirectory("DextorBot/Working");
     private static File workingKml = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Kml");
     private static File workingImage = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Image");
@@ -28,6 +29,7 @@ public class AddDirectory {
 
     public static void addDirectory(){
         if(!dextorBot.exists()) dextorBot.mkdir();
+        if(!log.exists()) log.mkdir();
         if(!working.exists()) working.mkdir();
         if(!workingKml.exists()) workingKml.mkdir();
         if(!workingImage.exists()) workingImage.mkdir();
