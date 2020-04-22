@@ -84,6 +84,7 @@ public class client implements Runnable{
             reader = new BufferedReader(new InputStreamReader(url.openStream()));
         } catch (IOException e) {
             e.printStackTrace();
+            return;
         }
 
 
@@ -92,6 +93,7 @@ public class client implements Runnable{
             line = reader.readLine();
         } catch (IOException e) {
             e.printStackTrace();
+            return;
         }
 
 

@@ -1,6 +1,9 @@
 package com.example.dexter007bot.Connection;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
@@ -27,11 +30,8 @@ public class PeerConnection {
     private WifiP2pManager mManager;
     private WifiP2pManager.Channel mChannel;
     private MainActivity mActivity;
-    private Collection<WifiP2pDevice> peers ;
     protected Collection<WifiP2pDevice> connectedPeers = new ArrayList<>();
     protected Collection<WifiP2pDevice> requestedPeers = new ArrayList<>();
-    WifiP2pGroup connects;
-    Intent intent = new Intent();
 
     public PeerConnection(WifiP2pManager mManager, WifiP2pManager.Channel mChannel, MainActivity mActivity) {
         this.mManager = mManager;
@@ -47,23 +47,20 @@ public class PeerConnection {
         mManager.discoverPeers(mChannel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Toast.makeText(mActivity, "Discovering Peers", Toast.LENGTH_SHORT).show();
             }
             @Override
             public void onFailure(int reason) {
-                Toast.makeText(mActivity,"Discovering Failed",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(mActivity,"Discovering Failed",Toast.LENGTH_SHORT).show();
             }
         });
     }
     WifiP2pManager.PeerListListener peerListListener =new WifiP2pManager.PeerListListener() {
         @Override
         public void onPeersAvailable(WifiP2pDeviceList peerList) {
-            for(WifiP2pDevice device: peerList.getDeviceList()) {
-                if(!requestedPeers.contains(device))
+            requestedPeers = peerList.getDeviceList();
+            for (WifiP2pDevice device : requestedPeers) {
+                if (!connectedPeers.contains(device))
                     connectPeers(device);
-            }
-            if(peerList.getDeviceList().size()==0){
-                Toast.makeText(mActivity, "No Device Found", Toast.LENGTH_SHORT).show();
             }
         }
     };
@@ -71,17 +68,16 @@ public class PeerConnection {
         final WifiP2pDevice device = current;
         final WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = device.deviceAddress;
-        System.out.println(device.deviceName);
+        //System.out.println(device.deviceName);
         mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
-                Toast.makeText(mActivity, "Requested: " + device.deviceName, Toast.LENGTH_SHORT).show();
-                requestedPeers.add(device);
+                //Toast.makeText(mActivity, "Requested: " + device.deviceName, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(int reason) {
-                Toast.makeText(mActivity, "Requesting Failed", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(mActivity, "Requesting Failed", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -89,23 +85,39 @@ public class PeerConnection {
         @Override
         public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
             if(wifiP2pInfo.groupFormed){
+
+                mManager.requestGroupInfo(mChannel, new WifiP2pManager.GroupInfoListener() {
+                    @Override
+                    public void onGroupInfoAvailable(WifiP2pGroup group) {
+                        if(group==null) return;
+                        connectedPeers= group.getClientList();
+                        mActivity.logger.write("Updated Peer List: ");
+                        for (WifiP2pDevice device : connectedPeers) {
+                            mActivity.logger.write(device.deviceName + ": " + device.deviceAddress);
+                        }
+                    }
+                });
+
                 if(wifiP2pInfo.isGroupOwner){
-                    Toast.makeText(mActivity, "Connected: Host", Toast.LENGTH_SHORT).show();
+                    mActivity.logger.write("Connected as Host");
+                    mActivity.btnWifi.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
                     new Thread(new PeerConnection.ListenThread()).start();
                     Discover();
                 }
+
                 else{
-                    Toast.makeText(mActivity, "Connected: Client", Toast.LENGTH_SHORT).show();
                     String IP = Ip.ipadd();
-                    Log.d("IP",IP);
                     InetAddress host = wifiP2pInfo.groupOwnerAddress;
                     String HOST = host.getHostAddress();
-                    Log.d("Host IP",host.getHostAddress());
+                    mActivity.logger.write("Connected as Client");
+                    mActivity.logger.write("Host IP : "+HOST);
+                    mActivity.btnWifi.setBackgroundTintList(ColorStateList.valueOf(Color.BLUE));
                     Thread broadcast = new Thread(new PeerConnection.BroadcastThread(HOST,IP,4040));
                     broadcast.start();
                     new Thread(new client(HOST)).start();
                 }
-            }else Discover();
+            }
+            else Discover();
         }
     };
     public class BroadcastThread implements Runnable{

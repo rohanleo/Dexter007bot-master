@@ -3,14 +3,23 @@ package com.example.dexter007bot.Connection;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.NetworkInfo;
+import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
+import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.widget.Toast;
+
+import androidx.appcompat.graphics.drawable.DrawableWrapper;
 
 import com.example.dexter007bot.MainActivity;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class WiFiDirect extends BroadcastReceiver {
 
@@ -38,24 +47,21 @@ public class WiFiDirect extends BroadcastReceiver {
                 WebServer webServer = new WebServer();
                 try {
                     webServer.start();
-                    //Toast.makeText(mActivity,"Server Started",Toast.LENGTH_SHORT).show();
+                    MainActivity.logger.write("WiFi Enabled : Server Started");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 peerConnection.Discover();
             }
             else if(state == WifiP2pManager.WIFI_P2P_STATE_DISABLED){
-                //Toast.makeText(context, "WiFi Disabled", Toast.LENGTH_SHORT).show();
             }
         }
 
         else if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)){
             int state = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE,-1);
             if(state == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
-                //Toast.makeText(mActivity,"Discovery Stopped",Toast.LENGTH_SHORT).show();
             }
             else if(state == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
-                //Toast.makeText(mActivity,"Discovery Started",Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -65,30 +71,28 @@ public class WiFiDirect extends BroadcastReceiver {
             }
         }
 
-        else if(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)){
-            if(mManager==null) return;
+        else if(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
+            if (mManager == null) return;
+
             NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-            if(networkInfo.isConnected()) {
+            if (networkInfo.isConnected()) {
                 mManager.requestConnectionInfo(mChannel, peerConnection.connectionInfoListener);
+                /*WifiP2pGroup connects = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+                if (connects != null)
+                    peerConnection.connectedPeers = connects.getClientList();
+
+                for (WifiP2pDevice device : peerConnection.connectedPeers) {
+                    mActivity.logger.write(device.deviceName + ": " + device.deviceAddress);
+                }*/
             }
-            else{
-                //Toast.makeText(mActivity,"Disconnected",Toast.LENGTH_SHORT).show();
+            else {
+                mActivity.btnWifi.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                MainActivity.logger.write("No Connections");
+                peerConnection.connectedPeers = new ArrayList<>();
             }
-            WifiP2pGroup connects = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
-            if(connects!=null)
-                peerConnection.connectedPeers = connects.getClientList();
         }
 
         else if(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)){
-            /*mManager.removeGroup(mChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onSuccess() {
-                    Toast.makeText(mActivity,"Removing from group",Toast.LENGTH_SHORT).show();
-                }
-                @Override
-                public void onFailure(int reason) {
-                }
-            });*/
         }
     }
 

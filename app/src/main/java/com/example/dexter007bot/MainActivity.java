@@ -18,6 +18,7 @@ import com.example.dexter007bot.Chats.ChatUtils;
 import com.example.dexter007bot.Connection.PeerConnection;
 import com.example.dexter007bot.Connection.WiFiDirect;
 import com.example.dexter007bot.Maps.MapActivity;
+import com.example.dexter007bot.SummaryVector.Logger;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.javiersantos.materialstyleddialogs.enums.Duration;
 import com.github.javiersantos.materialstyleddialogs.enums.Style;
@@ -73,7 +74,8 @@ public class MainActivity extends AppCompatActivity {
     public static ArrayList<String>al = new ArrayList<String>();
     //public static String id;
 
-    FloatingActionButton btnAttach, btnWifi;
+    FloatingActionButton btnAttach;
+    public FloatingActionButton btnWifi;
     LinearLayout atMap, atCamera, atVideo, atAudio, revealLayout;
     int cx,cy;
     Boolean hidden = true;
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
     PeerConnection peerConnection;
+    public static Logger logger = new Logger();
 
     WiFiDirect mReceiver;
     IntentFilter mIntentFilter;
@@ -113,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initialize();
+        logger.write("Application Started : "+LoginActivity.userName);
 
         adapter = new ChatMessageAdapter(this,new ArrayList<ChatMessage>());
         listView.setAdapter(adapter);
@@ -231,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
         btnWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                peerConnection.Discover();
+                //peerConnection.Discover();
             }
         });
     }
@@ -290,6 +294,7 @@ public class MainActivity extends AppCompatActivity {
                 //System.out.println(" false" );
                 return false;
             }
+            logger.write("Image File Created : "+ fileName);
         }
         else if(type.equals("video")){
             File video=Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/Video/" + fileName);
@@ -297,6 +302,7 @@ public class MainActivity extends AppCompatActivity {
             if(!video.exists()){
                 return false;
             }
+            logger.write("Video File Created : "+ fileName);
         }
         else if(type.equals("audio")){
             File audio=Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/Audio/" + fileName);
@@ -304,6 +310,7 @@ public class MainActivity extends AppCompatActivity {
             if(!audio.exists()){
                 return false;
             }
+            logger.write("Audio File Created : "+ fileName);
         }
         return true;
     }

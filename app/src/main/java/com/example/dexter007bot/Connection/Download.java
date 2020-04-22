@@ -3,6 +3,7 @@ package com.example.dexter007bot.Connection;
 import android.os.Environment;
 
 import com.example.dexter007bot.DiffUtils;
+import com.example.dexter007bot.MainActivity;
 import com.example.dexter007bot.SummaryVector.FileManager;
 import com.example.dexter007bot.SummaryVector.ReceivedDetailsLog;
 
@@ -63,6 +64,7 @@ public class Download implements Runnable{
 
             }
             perecentdownloaded = (downloaded/filesize)*100;
+            MainActivity.logger.write(IP + "::"+filename+" :Downloaded- "+perecentdownloaded+"% ");
             bout.close();
             in.close();
             if(downloaded!=filesize){

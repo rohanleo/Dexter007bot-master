@@ -16,8 +16,8 @@ public class Logger {
     private File logFileDir = null;
     private FileWriter logFileWriter = null;
     public Logger(){
-        this.logDirPath = String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/"));
-        this.logFileDir = new File(String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/")));
+        this.logDirPath = (Environment.getExternalStoragePublicDirectory("DextorBot")+"/AppLogs/");
+        //this.logFileDir = new File(logDirPath);
         String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
 
         try {
