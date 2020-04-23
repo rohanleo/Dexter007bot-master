@@ -7,17 +7,17 @@ import java.io.IOException;
 
 public class AddDirectory {
     private static File dextorBot= Environment.getExternalStoragePublicDirectory("DextorBot");
-    private static File log= Environment.getExternalStoragePublicDirectory("DextorBot/Log");
+    private static File log= Environment.getExternalStoragePublicDirectory("DextorBot/.Log");
     private static File applog= Environment.getExternalStoragePublicDirectory("DextorBot/AppLogs");
-    private static File working = Environment.getExternalStoragePublicDirectory("DextorBot/Working");
-    private static File workingKml = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Kml");
-    private static File workingImage = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Image");
-    private static File workingVideo = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Video");
-    private static File workingAudio = Environment.getExternalStoragePublicDirectory("DextorBot/Working/Audio");
+    private static File working = Environment.getExternalStoragePublicDirectory("DextorBot/.Working");
+    private static File workingKml = Environment.getExternalStoragePublicDirectory("DextorBot/.Working/.Kml");
+    private static File workingImage = Environment.getExternalStoragePublicDirectory("DextorBot/.Working/.Image");
+    private static File workingVideo = Environment.getExternalStoragePublicDirectory("DextorBot/.Working/.Video");
+    private static File workingAudio = Environment.getExternalStoragePublicDirectory("DextorBot/.Working/.Audio");
     private static File kmlDir=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml");
     private static File receiveKml=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml");
     private static File selfKml=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/SelfKml");
-    private static File diff=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/Diff");
+    private static File diff=Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/.Diff");
     private static File imageDir=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/Image");
     private static File image=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage");
     private static File rcvimageDir=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/ReceivedImage");

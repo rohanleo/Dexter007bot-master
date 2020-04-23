@@ -13,10 +13,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FileTable {
     public String peerID;
+    public String userName;
     public ConcurrentHashMap<String, FileEntry> fileMap;
 
-    public FileTable(String peerId){
+    public FileTable(String peerId,String userName){
         this.peerID = peerId;
+        this.userName=userName;
         this.fileMap = new ConcurrentHashMap<String, FileEntry>();
     }
 }

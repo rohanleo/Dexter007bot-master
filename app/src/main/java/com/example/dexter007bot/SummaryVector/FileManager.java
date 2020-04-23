@@ -30,7 +30,7 @@ public class FileManager {
     public FileManager(String databaseName){
         this.PEER_ID = Ip.ipadd();
         this.userName = LoginActivity.userName;
-        this.DATABASE_PATH =String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/Log/" + databaseName));
+        this.DATABASE_PATH =String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/.Log/" + databaseName));
         //Log.e("FileManager",DATABASE_PATH);
         this.fileTable=readDB(DATABASE_PATH);
     }
@@ -56,7 +56,7 @@ public class FileManager {
      * Deserialize data
      */
     public FileTable readDB(String DB_path) {
-        FileTable fileTable1 = new FileTable(PEER_ID);
+        FileTable fileTable1 = new FileTable(PEER_ID,userName);
         fileTable1.fileMap = new ConcurrentHashMap<>();
         //logger.d("DEBUG", "FileManager reading from fileDB");
         try{
@@ -65,6 +65,7 @@ public class FileManager {
             //convert the json string back to object
             fileTable1 = (FileTable)gson.fromJson(br, FileTable.class);
             fileTable1.peerID = this.PEER_ID;
+            fileTable1.userName=this.userName;
             Log.e("readDB",PEER_ID);
             /*for (String key : fileTable.fileMap.keySet()) {
                 FileEntry fileInfo = fileTable.fileMap.get(key);
@@ -85,7 +86,7 @@ public class FileManager {
         }
         catch (NullPointerException e) {
             this.writeDB(fileTable1,DB_path);
-            fileTable1 = new FileTable(this.PEER_ID);
+            fileTable1 = new FileTable(this.PEER_ID,this.userName);
             fileTable1.fileMap = new ConcurrentHashMap<>();
         }
         return fileTable1;

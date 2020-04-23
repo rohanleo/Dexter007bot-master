@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.graphics.drawable.DrawableWrapper;
 
+import com.example.dexter007bot.LoginActivity;
 import com.example.dexter007bot.MainActivity;
 
 import java.io.IOException;
@@ -47,10 +48,12 @@ public class WiFiDirect extends BroadcastReceiver {
                 WebServer webServer = new WebServer();
                 try {
                     webServer.start();
-                    MainActivity.logger.write("WiFi Enabled : Server Started");
+                    LoginActivity.logger.write("WiFi Enabled : Server Started");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                peerConnection.connectedPeers= new ArrayList<>();
+                peerConnection.requestedPeers= new ArrayList<>();
                 peerConnection.Discover();
             }
             else if(state == WifiP2pManager.WIFI_P2P_STATE_DISABLED){
@@ -60,6 +63,8 @@ public class WiFiDirect extends BroadcastReceiver {
         else if(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)){
             int state = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE,-1);
             if(state == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
+                /* if(!wifiManager.isWifiEnabled())
+                    peerConnection.Discover();*/
             }
             else if(state == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
             }
@@ -85,10 +90,11 @@ public class WiFiDirect extends BroadcastReceiver {
                     mActivity.logger.write(device.deviceName + ": " + device.deviceAddress);
                 }*/
             }
-            else {
+            else if(!networkInfo.isConnected()){
                 mActivity.btnWifi.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
-                MainActivity.logger.write("No Connections");
+                LoginActivity.logger.write("No Connections");
                 peerConnection.connectedPeers = new ArrayList<>();
+                peerConnection.Discover();
             }
         }
 

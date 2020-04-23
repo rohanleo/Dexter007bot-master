@@ -19,7 +19,7 @@ public class DiffUtils {
 
 
     public static void createDiff(File source, File destination) throws IOException {
-        File delta = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/Diff/"+getDeltaName(destination));
+        File delta = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/.Diff/"+getDeltaName(destination));
         try {
             JBDiff.bsdiff(source, destination, delta);
             //MapFragment.parseKml(app,context);

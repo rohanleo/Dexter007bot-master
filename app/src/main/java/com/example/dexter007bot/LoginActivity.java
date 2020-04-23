@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.example.dexter007bot.AIML.sample;
+import com.example.dexter007bot.SummaryVector.Logger;
 
 import org.alicebot.ab.AIMLProcessor;
 import org.alicebot.ab.MagicStrings;
@@ -42,6 +43,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private Button submit;
 
+    public static Logger logger;
+
     public static final int MULTIPLE_PERMISSIONS = 10;
     private final String[] permissions = new String[]{
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -56,11 +59,12 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        AddDirectory.addDirectory();
 
-        if(!hasPermissions(this,permissions)){
+        while(!hasPermissions(this,permissions)){
             ActivityCompat.requestPermissions(this,permissions,MULTIPLE_PERMISSIONS);
         }
+
+        AddDirectory.addDirectory();
 
         boolean available = isSDCardAvailable();
 
@@ -110,6 +114,8 @@ public class LoginActivity extends AppCompatActivity {
         AIMLProcessor.extension = new PCAIMLProcessorExtension();
 
         AIMLProcessor.extension= new sample();
+
+        logger = new Logger();
 
         sp = getSharedPreferences("First log",0);
         if(sp.getString("First login","").toString().equals("no")){
@@ -177,4 +183,5 @@ public class LoginActivity extends AppCompatActivity {
         }
         return true;
     }
+
 }

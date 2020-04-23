@@ -3,6 +3,7 @@ package com.example.dexter007bot.Connection;
 import android.os.Environment;
 
 import com.example.dexter007bot.DiffUtils;
+import com.example.dexter007bot.LoginActivity;
 import com.example.dexter007bot.MainActivity;
 import com.example.dexter007bot.SummaryVector.FileManager;
 import com.example.dexter007bot.SummaryVector.ReceivedDetailsLog;
@@ -33,7 +34,6 @@ public class Download implements Runnable{
     {
         try {
             //client.downloadCompleted=false;
-            FileManager fileManager = new FileManager(FilenameUtils.getBaseName(out.getName())+ ".json");
             //FileManager fileManager = new FileManager("ReceivedDetails_Log.json");
             URL url = new URL(link);
             HttpURLConnection http = (HttpURLConnection)url.openConnection();
@@ -64,14 +64,16 @@ public class Download implements Runnable{
 
             }
             perecentdownloaded = (downloaded/filesize)*100;
-            MainActivity.logger.write(IP + "::"+filename+" :Downloaded- "+perecentdownloaded+"% ");
+            LoginActivity.logger.write(IP + "::"+filename+" :Downloaded- "+perecentdownloaded+"% ");
             bout.close();
             in.close();
             if(downloaded!=filesize){
+                FileManager fileManager = new FileManager(FilenameUtils.getBaseName(out.getName())+ ".json");
                 fileManager.updateFilesFromSubfolders(out,IP,filesize,perecentdownloaded);
                 fileManager.writeDB(fileManager.fileTable,fileManager.DATABASE_PATH);
             }else{
                 File newOut = null;
+                boolean check=true;
                 if(filename.startsWith("IMG")){
                     newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/ReceivedImage/" + filename);
                     if(!newOut.exists())FileUtils.copyFile(out,newOut);
@@ -91,8 +93,8 @@ public class Download implements Runnable{
                             FileUtils.copyFile(out,newOut);
                         }else {
                             DiffUtils.createDiff(oldFile,out);
-
-                            File deltaList = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/Diff");
+                            check =false;
+                            File deltaList = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/.Diff");
                             File delta = null;
                             for(File file : deltaList.listFiles()){
                                 //System.out.println(file.getName());
@@ -113,6 +115,7 @@ public class Download implements Runnable{
                                 File dummy = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
                                 FileUtils.copyFile(newVersionCre,dummy);
                                 FileUtils.forceDelete(newVersionCre);
+                                check =true;
                             }
                             FileUtils.forceDelete(delta);
 
@@ -123,8 +126,11 @@ public class Download implements Runnable{
                     }
                 }
                 FileUtils.forceDelete(out);
-                fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
-                fileManager.writeDB(fileManager.fileTable,fileManager.DATABASE_PATH);
+                if(check){
+                    FileManager fileManager = new FileManager(FilenameUtils.getBaseName(out.getName())+ ".json");
+                    fileManager.updateFilesFromSubfolders(newOut,IP,filesize,100);
+                    fileManager.writeDB(fileManager.fileTable,fileManager.DATABASE_PATH);
+                }
             }
             new Thread(new ReceivedDetailsLog()).start();
         }

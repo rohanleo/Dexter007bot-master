@@ -23,8 +23,6 @@ public class ReceivedDetailsLog implements Runnable {
     final String DATABASE_PATH;
     final String PEER_ID;
     final String userName;
-    private boolean exit;
-    private boolean isRunning;
 
 
     public ReceivedDetailsLog(){
@@ -32,8 +30,6 @@ public class ReceivedDetailsLog implements Runnable {
         this.userName = LoginActivity.userName;
         this.DATABASE_PATH =String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/ReceivedDetails_Log.json"));
         this.fileTable=readDB(DATABASE_PATH);
-        this.exit = true;
-        this.isRunning = false;
     }
 
     @Override
@@ -44,14 +40,10 @@ public class ReceivedDetailsLog implements Runnable {
         System.out.println("Work Done");
     }
 
-    public void stop() {
-        this.exit = true;
-    }
-
     private void addDB() {
-        File dbList = Environment.getExternalStoragePublicDirectory("DextorBot/Log/");
+        File dbList = Environment.getExternalStoragePublicDirectory("DextorBot/.Log/");
         for(File file : dbList.listFiles()){
-            FileTable fileTable1 = readDB(String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/Log/" + file.getName())));
+            FileTable fileTable1 = readDB(String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/.Log/" + file.getName())));
             //Log.e("addDB",file.getName());
             fileTable.fileMap.putAll(fileTable1.fileMap);
             try {
@@ -83,7 +75,7 @@ public class ReceivedDetailsLog implements Runnable {
      * Deserialize data
      */
     public FileTable readDB(String DB_path) {
-        FileTable fileTable1 = new FileTable(PEER_ID);
+        FileTable fileTable1 = new FileTable(PEER_ID,userName);
         fileTable1.fileMap = new ConcurrentHashMap<>();
         //logger.d("DEBUG", "FileManager reading from fileDB");
         try{
@@ -92,13 +84,14 @@ public class ReceivedDetailsLog implements Runnable {
             //convert the json string back to object
             fileTable1 = (FileTable)gson.fromJson(br, FileTable.class);
             fileTable1.peerID = this.PEER_ID;
+            fileTable1.userName=this.userName;
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
         catch (NullPointerException e) {
             this.writeDB(fileTable1,DB_path);
-            fileTable1 = new FileTable(this.PEER_ID);
+            fileTable1 = new FileTable(this.PEER_ID,this.userName);
             fileTable1.fileMap = new ConcurrentHashMap<>();
         }
         return fileTable1;

@@ -60,6 +60,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.regex.Pattern;
 
+import static com.example.dexter007bot.LoginActivity.logger;
+
 public class MainActivity extends AppCompatActivity {
 
     static ListView listView;
@@ -105,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
     PeerConnection peerConnection;
-    public static Logger logger = new Logger();
+    //public static Logger logger = new Logger();
 
     WiFiDirect mReceiver;
     IntentFilter mIntentFilter;
@@ -235,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
         btnWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //peerConnection.Discover();
+                peerConnection.Discover();
             }
         });
     }
