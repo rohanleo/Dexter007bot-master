@@ -60,7 +60,8 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
         System.out.println(viewType);
 
         if(viewType == MY_MESSAGE) {
-            //System.out.println("USER");
+            //User message layout section
+
             convertView = LayoutInflater.from(getContext())
                     .inflate(R.layout.user_query_layout,parent,false);
 
@@ -68,7 +69,8 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
             textView.setText(getItem(position).getContent());
         }
         else if (viewType == BOT_MESSAGE){
-            //System.out.println("BOT");
+            //bot message layout section
+
             convertView = LayoutInflater.from(getContext())
                     .inflate(R.layout.bots_reply_layout,parent,false);
 
@@ -76,12 +78,12 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
             textView.setText(getItem(position).getContent());
         }
         else if(viewType == BOT_BUTTON){
-            //System.out.println("BUTTON");
+            //button layout section
+
             convertView = LayoutInflater.from((getContext()))
                     .inflate(R.layout.bot_button,parent,false);
             Button button =convertView.findViewById(R.id.button);
             button.setText(getItem(position).getContent());
-            //button.setId(View.generateViewId());
             final String s= button.getText().toString();
             //System.out.println("Button"+s);
             button.setOnClickListener(new View.OnClickListener() {
@@ -93,6 +95,8 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
             });
         }
         else if(viewType == IMAGE){
+            //Imageview layout section
+
             convertView = LayoutInflater.from((getContext())).inflate(R.layout.reply_image,parent,false);
             final ImageView imageView = convertView.findViewById(R.id.image);
             Bitmap myBitmap = BitmapFactory.decodeFile(getItem(position).getContent());
@@ -108,6 +112,8 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
             });
         }
         else if(viewType == VIDEO){
+            //Video layout section
+
             convertView = LayoutInflater.from((getContext())).inflate(R.layout.reply_video,parent,false);
             final VideoView videoView = convertView.findViewById(R.id.video);
             videoView.setVideoPath(getItem(position).getContent());
@@ -115,19 +121,25 @@ public class ChatMessageAdapter extends ArrayAdapter<ChatMessage> {
             videoView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    videoView.start();
+                    if(videoView.isPlaying()) videoView.start();
+                    else videoView.pause();
                 }
             });
         }
         else if(viewType == AUDIO){
+            //Audio layout section
+
             convertView = LayoutInflater.from((getContext())).inflate(R.layout.reply_audio,parent,false);
+            // Play/pause button
             ImageButton imageButton = convertView.findViewById(R.id.outgoing_imageButton);
+            //Timer
             final Chronometer chronometer = convertView.findViewById(R.id.chronometerLay);
             Boolean isPlaying = false;
             imageButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     //Log.e("ChatmessageAdapter:- ", getItem(position).getContent());
+
                     final MediaPlayer[] mediaPlayer = {new MediaPlayer()};
                     try {
                         mediaPlayer[0].setDataSource(getItem(position).getContent());

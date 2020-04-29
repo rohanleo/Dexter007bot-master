@@ -44,22 +44,15 @@ dependencies {
 
     //Image View
     implementation 'com.alexvasilkov:gesture-views:2.6.0'
-    ///////////////////////////////////////
     implementation 'com.squareup.picasso:picasso:2.71828'
-    //Video Player
-    //implementation 'com.afollestad:easyvideoplayer:0.3.0'
-    //Chat UI Library - ChatKit
-    //implementation 'com.github.stfalcon:chatkit:0.2.2'
+    ///////////////////////////////////////
+
     implementation 'com.github.ozodrukh:CircularReveal:2.0.1@aar'
 
     //Material Dialog
     implementation 'com.github.javiersantos:MaterialStyledDialogs:2.1'
 
-    //SeekBar
-    implementation 'com.annimon:paperstyle:1.1.0'
-
     //Diff
-    //implementation files('libs/jbdiff.jar')
     implementation group: 'io.takari', name: 'jbdiff', version: '1.0.1'
     //implementation group: 'commons-io', name: 'commons-io', version: '2.6'
 

@@ -28,6 +28,6 @@ public class SplashActivity extends AppCompatActivity {
                     ignored.printStackTrace();
                 }
             }
-        }, 1500);
+        }, 1000);
     }
 }

@@ -40,6 +40,9 @@ public class ReceivedDetailsLog implements Runnable {
         System.out.println("Work Done");
     }
 
+    /**
+     * merge all summary vectors in a single table
+     */
     private void addDB() {
         File dbList = Environment.getExternalStoragePublicDirectory("DextorBot/.Log/");
         for(File file : dbList.listFiles()){
@@ -58,11 +61,11 @@ public class ReceivedDetailsLog implements Runnable {
      * Serialize data
      */
     public void writeDB(FileTable fileTable1,String DB_path) {
+        //convert object to json string
         try{
             File file = new File(DB_path);
             FileWriter fileWriter = new FileWriter(file);
             gson.toJson(fileTable1,fileWriter);
-            //fileWriter.write(gson.toJson(fileTable));
             fileWriter.flush();
             fileWriter.close();
 
@@ -96,6 +99,10 @@ public class ReceivedDetailsLog implements Runnable {
         }
         return fileTable1;
     }
+
+    /**
+     * remove summary vector of all files which are deleted from the external storage
+     */
     public void removeDeletedFiles(){
         for (String key : fileTable.fileMap.keySet()) {
             FileEntry fileInfo = fileTable.fileMap.get(key);

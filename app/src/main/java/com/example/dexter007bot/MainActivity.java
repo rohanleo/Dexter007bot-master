@@ -1,10 +1,15 @@
 package com.example.dexter007bot;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -18,11 +23,12 @@ import com.example.dexter007bot.Chats.ChatUtils;
 import com.example.dexter007bot.Connection.PeerConnection;
 import com.example.dexter007bot.Connection.WiFiDirect;
 import com.example.dexter007bot.Maps.MapActivity;
-import com.example.dexter007bot.SummaryVector.Logger;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.javiersantos.materialstyleddialogs.enums.Duration;
 import com.github.javiersantos.materialstyleddialogs.enums.Style;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
@@ -64,23 +70,27 @@ import static com.example.dexter007bot.LoginActivity.logger;
 
 public class MainActivity extends AppCompatActivity {
 
-    static ListView listView;
+    private static ListView listView;
     FloatingActionButton btnSend;
-    static EditText edtTextMsg;
-    ImageView imageView;
+    private static EditText edtTextMsg;
     public static String TAG = "MainActivity";
 
     private Bot bot;
     public static Chat chat;
     public static ChatMessageAdapter adapter;
     public static ArrayList<String>al = new ArrayList<String>();
-    //public static String id;
-
     FloatingActionButton btnAttach;
     public FloatingActionButton btnWifi;
+
+    //layout
     LinearLayout atMap, atCamera, atVideo, atAudio, revealLayout;
+    RelativeLayout relativeLayout;
     int cx,cy;
     Boolean hidden = true;
+
+    //location
+    private static Location currentLocation;
+    private LocationManager locationManager;
 
     //audio
     boolean isRecording, isPlaying;
@@ -91,27 +101,27 @@ public class MainActivity extends AppCompatActivity {
     private Button backButton, okayButton;
     private TextView recordText;
 
+    //Media
     static String mCurrentMediaPath;
     public static String tempImage=null,tempVideo=null, tempAudio=null ;
     Boolean isImage=false, isVideo=false, isAudio=false;
 
+    //kml
     public static KmlDocument kml;
     public static File kmlFile;
     String kmlName;
     private static String totalChat, lastKey,response=null;
     private static int total;
 
-    RelativeLayout relativeLayout;
-
+    //connection
     public static WifiManager wifiManager;
     WifiP2pManager mManager;
     WifiP2pManager.Channel mChannel;
     PeerConnection peerConnection;
-    //public static Logger logger = new Logger();
-
     WiFiDirect mReceiver;
     IntentFilter mIntentFilter;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
         chat = new Chat(bot);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void initialize() {
         relativeLayout = findViewById(R.id.relative);
         listView = findViewById(R.id.listView);
@@ -146,16 +157,19 @@ public class MainActivity extends AppCompatActivity {
         atVideo = findViewById(R.id.atVideo);
         atAudio = findViewById(R.id.atAudio);
 
+        //selfkml file
         kmlName ="KML_" + LoginActivity.userName + ".kml";
         kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/SelfKml/" + kmlName);
         kml = new KmlDocument();
         if(!kmlFile.exists()){
+            //if not existed
             try {
                 kmlFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
             kml.parseKMLFile(kmlFile);
+            //initialize the session number
             kml.mKmlRoot.setExtendedData("total","0");
             kml.saveAsKML(kmlFile);
         }
@@ -164,6 +178,8 @@ public class MainActivity extends AppCompatActivity {
         }
         totalChat ="";
         response="";
+
+        //get the session number
         total = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
         total++;
         lastKey = getLatestKey();
@@ -179,13 +195,23 @@ public class MainActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        //current location
+        Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if (lastLocation != null) {
+            currentLocation = lastLocation;
+        }
     }
 
     private void onclickListener() {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                //send the user message for query
                 String message = edtTextMsg.getText().toString();
                 if(TextUtils.isEmpty(message)) {
                     Toast.makeText(MainActivity.this,"Please enter a query",Toast.LENGTH_SHORT).show();
@@ -204,6 +230,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 makeEffect(revealLayout,cx,cy);
+                //Move to map activity
                 Intent intent = new Intent(MainActivity.this, MapActivity.class);
                 startActivity(intent);
             }
@@ -229,9 +256,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 makeEffect(revealLayout,cx,cy);
                 RecordAudio();
-                //Log.e("atAudio listner:", "audio");
-                //isAudio=true;
-                //checkMediaAvailabilty();
             }
         });
         btnWifi.setOnClickListener(new View.OnClickListener() {
@@ -242,17 +266,24 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onResume() {
         super.onResume();
         checkMediaAvailabilty();
         registerReceiver(mReceiver,mIntentFilter);
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, myLocationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, myLocationListener);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         unregisterReceiver(mReceiver);
+        locationManager.removeUpdates(myLocationListener);
     }
 
     @Override
@@ -261,6 +292,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * check if the media is available before displaying in chat
+     */
     private void checkMediaAvailabilty() {
         if(isImage){
             //Log.e("checkMediaAvailabili:", "image");
@@ -288,6 +322,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * check for the path of the media
+     */
     private boolean checkPath(String fileName, String type) {
         if(type.equals("image")){
             File image=Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/Image/" + fileName);
@@ -317,6 +354,9 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    /**
+     * opens the attachment window
+     */
     private void makeEffect(final LinearLayout layout, int cx, int cy) {
         int radius = Math.max(layout.getWidth(), layout.getHeight());
 
@@ -369,6 +409,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Passing message to Array adapter for displaying in chat
+     */
     private static void botsReply(String response) {
         ChatMessage chatMessage = new ChatMessage(1,response);
         adapter.add(chatMessage);
@@ -393,12 +436,22 @@ public class MainActivity extends AppCompatActivity {
         ChatMessage chatMessage = new ChatMessage(5,mCurrentMediaPath);
         adapter.add(chatMessage);
     }
+
+    /**
+     * Main function for user-bot interaction
+     * bot response for each user query
+     */
     public static void  fun(String message,String type){
         String dummy;
         //Log.e("fun:- ", type + message);
+        //check if chat is just initialized
         if(response==null) dummy = message;
         else dummy=response + ":" + message;
+
+        //appending current message to total message
         totalChat += dummy + "-";
+
+        //check for type of user interaction
         if(type =="image"){
             message = "qwertyuu";
             replyImage();
@@ -414,62 +467,83 @@ public class MainActivity extends AppCompatActivity {
         else if(type == "text"){
             sendMessage(message);
         }
+
+        //bots reply according to the user interaction
         response = chat.multisentenceRespond(message);
         botsReply(response);
+
+        //for Buttons
         for(int i=0;i<al.size();i++)
         {
             String dum =al.get(i);
             botButton(dum);
         }
         al.clear();
+
         //clear editText
         edtTextMsg.setText("");
         listView.setSelection(adapter.getCount()-1);
 
+        //saving the chat in kml extended data
         kml.mKmlRoot.setExtendedData("total",total + "");
-
-        String uniqueId = generateRandomString();
-        String msg = ChatUtils.getExtendedDataFormatName(totalChat,total + "",uniqueId);
+        String msg = ChatUtils.getExtendedDataFormatName(totalChat,total + "",type,currentLocation);
         kml.mKmlRoot.setExtendedData(lastKey,msg);
         kml.saveAsKML(kmlFile);
     }
 
+    /**
+     * Capture the image
+     */
     private void   CaptureImage(){
+        //opens system camera
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraIntent.putExtra(MediaStore.EXTRA_SIZE_LIMIT, "262144");
+
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        //image name and path
         String fileName = "IMG" +  "_" + LoginActivity.userName +"_"+timeStamp + ".jpg";
         String path="DextorBot/DextorImage/Image/";
         File image = Environment.getExternalStoragePublicDirectory(path + fileName);
+
         Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", image);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
         cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivityForResult(cameraIntent, 1000);
+        startActivityForResult(cameraIntent,1000);
+
         tempImage = image.getName();
         mCurrentMediaPath = image.getAbsolutePath();
-        //Log.e("CaptureImage: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
-        //fun(fileName,"image");
     }
 
+    /**
+     * Record Video
+     */
     private void RecordVideo() {
+        //opens system camera
         Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        //video name and path
         String fileName = "VID" +  "_" + LoginActivity.userName+"_" +timeStamp +".mp4";
         String path = "DextorBot/DextorVideo/Video/";
         File video = Environment.getExternalStoragePublicDirectory(path + fileName);
+
         Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", video);
         cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
         cameraIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         cameraIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 10);
         startActivityForResult(cameraIntent, 1001);
+
         tempVideo = video.getName();
         mCurrentMediaPath=video.getAbsolutePath();
-        //Log.e("RecordVideo: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
-        //return fileName;
     }
 
+    /**
+     * Record Audio
+     */
     private void RecordAudio(){
+        //view for the dialog box
         View view = getLayoutInflater().inflate(R.layout.audio_popup_layout, null);
+
+        //opens a dialog box for audio recording
         final MaterialStyledDialog materialStyledDialog = new MaterialStyledDialog.Builder(MainActivity.this)
                 .setTitle("Audio")
                 .setCustomView(view, 10, 20, 10, 20)
@@ -478,6 +552,7 @@ public class MainActivity extends AppCompatActivity {
                 .setStyle(Style.HEADER_WITH_TITLE)
                 .withDarkerOverlay(true)
                 .build();
+
         recordButton = view.findViewById(R.id.record_button_dialog);
         chronometer = view.findViewById(R.id.chronometer);
         backButton = view.findViewById(R.id.record_dialog_back_button);
@@ -491,12 +566,16 @@ public class MainActivity extends AppCompatActivity {
         recorder = null;
 
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+
+        //audio name and path
         final String fileName ="AUD" + "_" +  LoginActivity.userName + timeStamp + "_" + ".mp3";
         String path = "DextorBot/DextorAudio/Audio/";
         final String finalFilePath = Environment.getExternalStoragePublicDirectory(path + fileName).getAbsolutePath();
+
         tempAudio = fileName;
         mCurrentMediaPath = finalFilePath;
-        //Log.e("RecordAudio: ", "mCurrentMediaPath:- " + mCurrentMediaPath);
+
+        //closes the dialog box
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -507,6 +586,8 @@ public class MainActivity extends AppCompatActivity {
                     file.delete();
             }
         });
+
+        //saves the recorded audio
         okayButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -517,6 +598,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //to start/stop recording
         recordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -542,6 +624,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //play/pause the recorded audio
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -560,11 +643,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         materialStyledDialog.show();
-        //materialDialog.dismiss();
-        //fun(tempAudio,"audio");
-        //return fileName;
     }
 
+    /**
+     * play the recorded audio
+     * @param filePath
+     */
     private void startPlaying(String filePath) {
         mediaPlayer = new MediaPlayer();
         try {
@@ -589,14 +673,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * stop playing the recorded audio
+     */
     private void stopPlaying() {
-        if (mediaPlayer != null)
-            mediaPlayer.release();
+        if (mediaPlayer != null) mediaPlayer.release();
         isPlaying = false;
         mediaPlayer = null;
         chronometer.stop();
     }
 
+    /**
+     * start recording
+     * @param filePath
+     */
     private void startRecording(String filePath) {
 
         recorder = new MediaRecorder();
@@ -615,18 +705,14 @@ public class MainActivity extends AppCompatActivity {
         chronometer.start();
     }
 
+    /**
+     * stop recording
+     */
     private void stopRecording() {
         recorder.stop();
         chronometer.stop();
         recorder.release();
         recorder = null;
-    }
-
-    private static String generateRandomString(){
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] token = new byte[8];
-        secureRandom.nextBytes(token);
-        return new BigInteger(1, token).toString(16);
     }
 
     private static String getLatestKey(){
@@ -643,4 +729,31 @@ public class MainActivity extends AppCompatActivity {
         String[] s = p.split(msg,4);
         return s[0];
     }
+
+    /**
+     * Location listener to get current location
+     */
+    private LocationListener myLocationListener = new LocationListener()
+    {
+        @Override
+        public void onLocationChanged(Location location)
+        {
+            currentLocation = location;
+        }
+
+        @Override
+        public void onProviderDisabled(String provider)
+        {
+        }
+
+        @Override
+        public void onProviderEnabled(String provider)
+        {
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras)
+        {
+        }
+    };
 }

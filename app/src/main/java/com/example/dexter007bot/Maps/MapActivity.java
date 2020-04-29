@@ -53,7 +53,6 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
     private MapView mMap;
 
     private MapEventsOverlay mapEventsOverlay;
-    //private KmlDocument kmlDocument;
     private List<GeoPoint> geoPoints;
     private List<Marker> markerList;
     private Polygon polygon;
@@ -77,18 +76,17 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         saveButton = findViewById(R.id.savedbtn);
         resetButton = findViewById(R.id.resetbtn);
 
+        //save all the overlays
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 kml.mKmlRoot.addOverlay(polygon,kml);
                 kml.mKmlRoot.addOverlay(marker,kml);
-                long millis = System.currentTimeMillis();
-                //File localFile = kmlDocument.getDefaultPathForAndroid("KML_" + millis + ".kml");
-                //Log.d("path",localFile.getAbsolutePath());
-                //kmlDocument.saveAsKML(localFile);
                 Toast.makeText(getApplicationContext(),"Polygon Saved",Toast.LENGTH_SHORT).show();
             }
         });
+
+        //clear the overlays
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -98,15 +96,11 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
                 for (Overlay overlay : markerList) {
                     mMap.getOverlays().remove(overlay);
                 }
-                //mMap.getOverlays().remove(markerList);
-                //markerList.clear();
                 mMap.getOverlays().add(0,mapEventsOverlay);
                 initMap();
                 mMap.invalidate();
             }
         });
-
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -135,6 +129,9 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         mMap.onPause();
     }
 
+    /**
+     * location listener for getting current location
+     */
     private LocationListener myLocationListener = new LocationListener()
     {
         @Override
@@ -159,10 +156,14 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         }
     };
 
+    /**
+     * initialize the map
+     */
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void initMap() {
         mMap = findViewById(R.id.map);
         mMap.setTileSource(TileSourceFactory.MAPNIK);
+
         Display display = MapActivity.this.getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
@@ -170,8 +171,6 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         mMap.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT);
         mMap.setMultiTouchControls(true);
         mMap.setClickable(true);
-
-        //kmlDocument = new KmlDocument();
 
         mapController = (MapController) mMap.getController();
         mapController.setZoom(18.0f);
@@ -187,6 +186,8 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
             // for Activity#requestPermissions for more details.
             return;
         }
+
+        //current location
         Location lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (lastLocation != null) {
             updateLoc(lastLocation);
@@ -231,7 +232,9 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         }*/
     }
 
-
+    /**
+     * Add Marker on click
+     */
 
     @Override
     public boolean singleTapConfirmedHelper(GeoPoint p) {
@@ -240,12 +243,14 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         polygon.setPoints(geoPoints);
         Marker mMarker = new Marker(mMap);
         mMarker.setPosition(p);
+
         //marker.setIcon(getResources().getDrawable(R.mipmap.marker_red_round));
         mMarker.setAnchor(Marker.ANCHOR_CENTER,Marker.ANCHOR_BOTTOM);
         mMarker.setTitle(p.getLatitude() + "," + p.getLongitude());
         markerList.add(mMarker);
         int size=markerList.size();
         mMap.getOverlays().add(markerList.get(size-1));
+
         /*Marker check = new Marker(mMap);
         check.setPosition(z);
         check.setAnchor(Marker.ANCHOR_CENTER,Marker.ANCHOR_BOTTOM);
@@ -261,8 +266,12 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
         return false;
     }
 
-    private void updateLoc(Location loc)
-    {
+    /**
+     * update current location
+     * @param loc
+     */
+    private void updateLoc(Location loc) {
+        //update my location
         GeoPoint locGeoPoint = new GeoPoint(loc.getLatitude(), loc.getLongitude());
         if(marker==null){
             mapController.setCenter(locGeoPoint);
@@ -271,7 +280,9 @@ public class MapActivity extends AppCompatActivity implements MapEventsReceiver 
             marker.setPosition(locGeoPoint);
             String s= MainActivity.tempImage;
             if(s!=null) {
+                //setting snippet value name of the image
                 marker.setSnippet(s);
+                //custom info window for the marker
                 CustomInfoWindow ciw = new CustomInfoWindow(R.layout.custom_info_window, mMap, marker, MapActivity.this);
                 marker.setInfoWindow(ciw);
             }

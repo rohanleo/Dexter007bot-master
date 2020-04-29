@@ -5,6 +5,10 @@ import android.os.Environment;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * for creating directories
+ */
+
 public class AddDirectory {
     private static File dextorBot= Environment.getExternalStoragePublicDirectory("DextorBot");
     private static File log= Environment.getExternalStoragePublicDirectory("DextorBot/.Log");

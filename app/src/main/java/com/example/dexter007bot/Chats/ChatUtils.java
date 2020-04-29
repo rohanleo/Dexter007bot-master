@@ -4,6 +4,8 @@ package com.example.dexter007bot.Chats;
 
 
 
+import android.location.Location;
+
 import com.example.dexter007bot.Model.Message;
 
 import java.text.DateFormat;
@@ -12,18 +14,12 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/**
- * Created by naman on 11/3/18.
- */
-
 public class ChatUtils {
 
-
-    public static String getExtendedDataFormatName(String text,String type,String mapID){
-        //String lat = ChatActivity.currLoc.getLatitude()+"";
-        //String lon = ChatActivity.currLoc.getLongitude()+"";
-        String latlon = "lat" + "_" + "lon";
-        return getTimeStamp()+"-"+type+"-"+mapID+"-"+text+"-"+latlon;
+    //get message for the extended data kml
+    public static String getExtendedDataFormatName(String text, String version, String type, Location location){
+        String latlon = location.getLatitude() + "_" + location.getLongitude();
+        return getTimeStamp()+"-"+version+"-"+type+"-"+text+"-"+latlon;
     }
 
     public static String getTimeStamp(){
@@ -31,7 +27,7 @@ public class ChatUtils {
     }
 
     //Get a Message object from a extended data format string
-    public static Message getMessageObject(String extendedData, Author author){
+   /* public static Message getMessageObject(String extendedData, Author author){
         Message message = null;
         Pattern p = Pattern.compile("-");
         String[] s = p.split(extendedData,5);
@@ -74,7 +70,7 @@ public class ChatUtils {
             e.printStackTrace();
         }
         return message;
-    }
+    }*/
 
 
 }

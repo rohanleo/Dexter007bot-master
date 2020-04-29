@@ -60,10 +60,12 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //Asking Permissions
         while(!hasPermissions(this,permissions)){
             ActivityCompat.requestPermissions(this,permissions,MULTIPLE_PERMISSIONS);
         }
 
+        //Adding directories
         AddDirectory.addDirectory();
 
         boolean available = isSDCardAvailable();
@@ -115,17 +117,20 @@ public class LoginActivity extends AppCompatActivity {
 
         AIMLProcessor.extension= new sample();
 
-        logger = new Logger();
-
         sp = getSharedPreferences("First log",0);
         if(sp.getString("First login","").toString().equals("no")){
+            //Not first time login
             userEmail = sp.getString("email","");
             userPhoneNum = sp.getString("phone","");
             userName = getSource(userEmail) + "_" +userPhoneNum;
+            logger = new Logger();
+
+            //Move to main activity
             Intent i = new Intent(LoginActivity.this,MainActivity.class);
             startActivity(i);
             finish();
         }else{
+            //first time login
             setContentView(R.layout.activity_login);
             email = findViewById(R.id.emailText);
             phone = findViewById(R.id.phoneText);
@@ -133,17 +138,22 @@ public class LoginActivity extends AppCompatActivity {
             submit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    //check if user details are filled or not
                     if(email.getText().toString().matches("") || phone.getText().toString().matches("")){
                         Toast.makeText(LoginActivity.this,"Please fill the details",Toast.LENGTH_LONG).show();
                     }else{
+                        //Store the details of user in sharedpreferences
                         SharedPreferences.Editor editor = sp.edit();
                         editor.putString("First login","no");
                         editor.putString("email", String.valueOf(email.getText()));
                         editor.putString("phone", String.valueOf(phone.getText()));
                         editor.commit();
+
                         userEmail = sp.getString("email","");
                         userPhoneNum = sp.getString("phone","");
                         userName = getSource(userEmail) + "_" +userPhoneNum;
+                        logger = new Logger();
+                        //Move to main activity
                         Intent i = new Intent(LoginActivity.this,MainActivity.class);
                         startActivity(i);
                         finish();
@@ -173,6 +183,9 @@ public class LoginActivity extends AppCompatActivity {
         return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)? true: false;
     }
 
+    /**
+     * checking for permissions access
+     */
     public boolean hasPermissions(Context context, String... permissions){
         if(context!=null && permissions!=null ){
             for(String permission:permissions){

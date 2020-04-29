@@ -37,6 +37,7 @@ public class CustomInfoWindow extends InfoWindow {
 
     @Override
     public void onOpen(Object item) {
+        //Custom Info Window opened
         lv = mView.findViewById(R.id.ciw_lv);
         String des;
         if(item instanceof Polygon)
@@ -56,12 +57,16 @@ public class CustomInfoWindow extends InfoWindow {
                     String fileName = allFiles[i];
                     String folderName = "DextorBot/";
                     if (fileName.contains("jpg")) {
+                        //Image is present in the snippet, pass intent to imageview activity
+
                         folderName = folderName + "DextorImage/"+fileName;
                         Intent ii = new Intent(context, ImageViewActivity.class);
                         ii.putExtra("url",folderName);
                         context.startActivity(ii);
                     }
                    /* else if (fileName.contains("mp4")) {
+                        //Video is present in the snippet, pass intent to video activity
+
                         folderName = folderName + "Movies/"+fileName;
                         //Intent ii = new Intent(context, VideoPlayer.class);
                         //ii.putExtra("url",folderName);

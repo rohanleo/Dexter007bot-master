@@ -17,7 +17,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
-
+/**
+ * this creates a separate json file for each summary vector
+ */
 public class FileManager {
 
     public FileTable fileTable;
@@ -39,6 +41,7 @@ public class FileManager {
      * Serialize data
      */
     public void writeDB(FileTable fileTable1,String DB_path) {
+        //from object to json
         try{
             File file = new File(DB_path);
             FileWriter fileWriter = new FileWriter(file);
@@ -56,9 +59,9 @@ public class FileManager {
      * Deserialize data
      */
     public FileTable readDB(String DB_path) {
+        //from json to object
         FileTable fileTable1 = new FileTable(PEER_ID,userName);
         fileTable1.fileMap = new ConcurrentHashMap<>();
-        //logger.d("DEBUG", "FileManager reading from fileDB");
         try{
             BufferedReader br = new BufferedReader(new FileReader(DB_path));
 
@@ -85,6 +88,7 @@ public class FileManager {
             e.printStackTrace();
         }
         catch (NullPointerException e) {
+            //initialize if null
             this.writeDB(fileTable1,DB_path);
             fileTable1 = new FileTable(this.PEER_ID,this.userName);
             fileTable1.fileMap = new ConcurrentHashMap<>();
@@ -93,34 +97,40 @@ public class FileManager {
     }
 
     /**
-     * Traverse the folder and add / remove files
+     * Initialise data for summary vector
      */
 
     public void updateFilesFromSubfolders(File file, String senderIp,double fileSize, double percentDownloaded ) {
-        File file_path = file;
-        String relative_path = file_path.getPath();
-        String fileID = getFileIDFromPath(file_path);
+        String relative_path = file.getPath();
+        //create file id
+        String fileID = getFileIDFromPath(file);
+        //create timestamp
         String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
         String typeoffile;
-        if(file_path.getName().startsWith("IMG")) typeoffile="image";
-        else if(file_path.getName().startsWith("VID")) typeoffile="video";
-        else if(file_path.getName().startsWith("AUD")) typeoffile="audio";
+        if(file.getName().startsWith("IMG")) typeoffile="image";
+        else if(file.getName().startsWith("VID")) typeoffile="video";
+        else if(file.getName().startsWith("AUD")) typeoffile="audio";
         else typeoffile="kml";
         Pattern p = Pattern.compile("_");
-        String origin = p.split(FilenameUtils.getBaseName(file_path.getName()))[1] + "_" + p.split(FilenameUtils.getBaseName(file_path.getName()))[2];
-        Boolean status;
-        if(percentDownloaded==100) status =true;
-        else status=false;
+        //Origin of the file
+        String origin = p.split(FilenameUtils.getBaseName(file.getName()))[1] + "_" + p.split(FilenameUtils.getBaseName(file.getName()))[2];
+        //status of download
+        boolean status = percentDownloaded == 100;
 
-        enterFile(fileID, file_path.getName(), relative_path, fileSize,percentDownloaded, timeStamp, senderIp,typeoffile,origin, status);
+        enterFile(fileID, file.getName(), relative_path, fileSize,percentDownloaded, timeStamp, senderIp,typeoffile,origin, status);
     }
+
     /**
      * Store file description
      * @param fileID
      * @param fileName
+     * @param filePath
      * @param fileSize
+     * @param percentDownloaded
      * @param timestamp
      * @param source
+     * @param typeoffile
+     * @param origin
      * @param destinationReachedStatus
      */
     public void enterFile(String fileID, String fileName, String filePath, double fileSize, double percentDownloaded, String timestamp,
@@ -132,6 +142,11 @@ public class FileManager {
     }
 
 
+    /**
+     * get unique id from file name
+     * @param file
+     * @return
+     */
     public String getFileIDFromPath(File file){
         MessageDigest md = null;
         try {
@@ -148,13 +163,6 @@ public class FileManager {
         }
 
         return hexString.toString();
-    }
-
-    public void destinationReachStatusTrue(String fileID){
-        FileEntry fileEntry = fileTable.fileMap.get(fileID);
-        if(fileEntry!=null) {
-            fileEntry.setDestinationReachedStatus(true);
-        }
     }
 
 }
