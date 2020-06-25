@@ -3,9 +3,11 @@ package com.example.dexter007bot;
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -13,27 +15,27 @@ import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
-import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 
 import com.example.dexter007bot.Chats.ChatUtils;
-import com.example.dexter007bot.Connection.PeerConnection;
-import com.example.dexter007bot.Connection.WiFiDirect;
 import com.example.dexter007bot.Maps.MapActivity;
+import com.example.dexter007bot.Service.P2PConnectService;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.javiersantos.materialstyleddialogs.enums.Duration;
 import com.github.javiersantos.materialstyleddialogs.enums.Style;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import android.os.IBinder;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -59,8 +61,6 @@ import org.osmdroid.bonuspack.kml.KmlDocument;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -114,12 +114,9 @@ public class MainActivity extends AppCompatActivity {
     private static int total;
 
     //connection
-    public static WifiManager wifiManager;
-    WifiP2pManager mManager;
-    WifiP2pManager.Channel mChannel;
-    PeerConnection peerConnection;
-    WiFiDirect mReceiver;
-    IntentFilter mIntentFilter;
+    public static P2PConnectService myService;
+    public static boolean syncServiceBound = false;
+    public static boolean myServiceBound = false;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -183,18 +180,6 @@ public class MainActivity extends AppCompatActivity {
         total = Integer.parseInt(kml.mKmlRoot.getExtendedData("total"));
         total++;
         lastKey = getLatestKey();
-
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        mManager = (WifiP2pManager) getSystemService(Context.WIFI_P2P_SERVICE);
-        mChannel = mManager.initialize(this,getMainLooper(),null);
-        mReceiver = new WiFiDirect(mManager,mChannel,this);
-        peerConnection = new PeerConnection(mManager, mChannel, this);
-        mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -261,9 +246,9 @@ public class MainActivity extends AppCompatActivity {
         btnWifi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                peerConnection.Discover();
             }
         });
+        startService();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -271,7 +256,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         checkMediaAvailabilty();
-        registerReceiver(mReceiver,mIntentFilter);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
@@ -282,14 +266,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(mReceiver);
         locationManager.removeUpdates(myLocationListener);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+        unbindAllService();
     }
 
     /**
@@ -486,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
 
         //saving the chat in kml extended data
         kml.mKmlRoot.setExtendedData("total",total + "");
-        String msg = ChatUtils.getExtendedDataFormatName(totalChat,total + "",type,currentLocation);
+        String msg = ChatUtils.getExtendedDataFormatName(totalChat,total + "",currentLocation);
         kml.mKmlRoot.setExtendedData(lastKey,msg);
         kml.saveAsKML(kmlFile);
     }
@@ -756,4 +739,82 @@ public class MainActivity extends AppCompatActivity {
         {
         }
     };
+
+    private void startService(){
+        final Intent p2pServiceIntent = new Intent(getApplicationContext(), P2PConnectService.class);
+        bindService(p2pServiceIntent, myServiceConnection, Context.BIND_AUTO_CREATE);
+        startService(p2pServiceIntent);
+        if(!locationServicesEnabled())
+            enableGPS();
+    }
+
+    private void unbindAllService(){
+        final Intent myServiceIntent = new Intent(getApplicationContext(),P2PConnectService.class);
+        if(myServiceBound){
+            unbindService(myServiceConnection);
+        }
+        myServiceBound = false;
+        stopService(myServiceIntent);
+    }
+
+    public static ServiceConnection myServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            P2PConnectService.P2PConnectServiceBinder binder = (P2PConnectService.P2PConnectServiceBinder) service;
+            myService = binder.getService();
+            myServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            myServiceBound = false;
+        }
+    };
+
+    public void enableGPS() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder
+                .setMessage(R.string.gps_msg)
+                .setCancelable(false)
+                .setTitle("Turn on Location")
+                .setPositiveButton(R.string.enable_gps,
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,
+                                                int id) {
+                                Intent callGPSSettingIntent = new Intent(
+                                        Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                startActivityForResult(callGPSSettingIntent, 5);
+                            }
+                        });
+        alertDialogBuilder.setNegativeButton(R.string.cancel,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
+    }
+
+    public boolean locationServicesEnabled() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            int locationMode = Settings.Secure.LOCATION_MODE_OFF;
+
+            try {
+                locationMode = Settings.Secure.getInt(getContentResolver(), Settings.Secure.LOCATION_MODE);
+
+            } catch (Settings.SettingNotFoundException ignored) {
+                // This is ignored
+            }
+
+            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
+
+        } else {
+            String locationProviders = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            return !TextUtils.isEmpty(locationProviders);
+        }
+    }
+
 }

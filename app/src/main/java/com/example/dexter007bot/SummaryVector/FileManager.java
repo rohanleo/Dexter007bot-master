@@ -3,7 +3,7 @@ package com.example.dexter007bot.SummaryVector;
 import android.os.Environment;
 import android.util.Log;
 
-import com.example.dexter007bot.Connection.Ip;
+import com.example.dexter007bot.Ip;
 import com.example.dexter007bot.LoginActivity;
 import com.google.gson.Gson;
 
@@ -30,7 +30,7 @@ public class FileManager {
 
 
     public FileManager(String databaseName){
-        this.PEER_ID = Ip.ipadd();
+        this.PEER_ID = new String(Ip.ipadd());
         this.userName = LoginActivity.userName;
         this.DATABASE_PATH =String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/.Log/" + databaseName));
         //Log.e("FileManager",DATABASE_PATH);

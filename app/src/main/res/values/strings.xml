@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">Dexter007bot</string>
+
     <string name="text_hint">Say Hello!</string>
+    <string name="gps_msg">GPS is disabled in your device. Otherwise you will not be able to collect data !!</string>
+    <string name="enable_gps">Turn on Location</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="CHIRP_APP_KEY">A92C1123ceC94f6Caa9a01De0</string>
+    <string name="CHIRP_APP_SECRET">4dAeEF0fDd3ebE173A0EECeC1eCa47ABCdFe7ba093F59D7C4F</string>
+    <string name="CHIRP_APP_CONFIG">J2TrbnTEK9rYW4KKApC1+veZrpxX5/Ei/k+Cyc5L+53rOSMM0JvXfDtNvQpOC3KAK8nKhkNhsOqTsszvHcAbjb+nMrOKk9aeUvHlLCSU465WzqkaZT0yVDLel6w9och453EHgDnUA5GRNZKB3I6AWDCbz+A96kRiYjFZuuqCkCEErNE+Gm4FuwN2CPx/+rWgUf3CgYnILhzyZRx+ZxrqJHRtWxisDQDGvuz9+f9R+hzcY+4oeUFdYtCAupzdv9BiwgZJ9T6WagVYCT/KEyFKc53n6nFgk4sZ7wouTM1z8w3rNT19nyClOhupw7feagolzl0YHaknWlz0UYMMdB4W6eNYmxLR+g0GYXACXDvPpwhGCqVHwsWVJXizkDd8CrA+67D4Pbaswx+5oWSIorfSaprP/QsvNdygL/kam5YbmhLR+e2GwMwfno2W1NcKNdrSpeMLr3NRsJyLZL8x2aA/8MQE/5tBEkdrjHrICbuyQoHhca5Sx72MftR6e4OFWSTdRu/7iT+OopUT2pEiKMx2vRz1YmYZQZVDpDwM8O8PaytUt1g+gWDE9BF9N/szGlQQ+W5GJVDoGtW5C/u9IZmoVE9tF5KYnHAb6lZtErfyUE9tPb19YtAmgBl2DuylIi0vx/hpOunhejD+0xsKNI6mjbRU8sLcsoWVoSCh1IN6803T0+uj7RvVmkXKbBXrKWN1WKXuTfL+pPxJhrjwgQ5+KQk82QkHM0/9EY32V5VM/WSjmzWXCRADDmUbSre4uSN3DrAPAN2jGxF8YTShEi7a+ao7hkkI1D5yxt3X1hpOAKInj12Z8qTDidoTliAMObB/65peIsfxnJ3wEJ4e8RGgLLiZsh7C1ngN3J6UEQUYZSabsrXOVWF6LO3AsUcpQ/2Q8bx1wKQe1zJBQhcmKLmw7E8BUWTwqZ6725i0wqfVKdAKOnq7xzyqJJfY9GQLrZzH8Xkd+zDIhGIndGc2raKuihsuxFo8zWMyRxyqMw0UPwW89C8t4aGC3ktruVEby4rdV8apvacUZZ1Trg4gMGMhiG1L18FkHqpYjd7WWDsXHP/FZZmKHOALFlC8Hie5gKi/PvUayjdV6xQrE6gDckp+aksrzd/1yoD8Qs8D4SsBzJk=</string>
+
 </resources>

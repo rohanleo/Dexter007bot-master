@@ -45,7 +45,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public static Logger logger;
 
-    public static final int MULTIPLE_PERMISSIONS = 10;
+    public static final int MULTIPLE_PERMISSIONS = 15;
     private final String[] permissions = new String[]{
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -54,7 +54,11 @@ public class LoginActivity extends AppCompatActivity {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.ACCESS_WIFI_STATE,
-            Manifest.permission.CHANGE_WIFI_STATE};
+            Manifest.permission.CHANGE_WIFI_STATE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.CHANGE_NETWORK_STATE};
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

@@ -35,8 +35,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.1.0'
     implementation 'me.himanshusoni.chatmessageview:chat-message-view:1.0.3'
     //////////////////////////////////////////////////////////
-    implementation 'com.google.maps.android:android-maps-utils:0.6.2'
-    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+    //implementation 'com.google.maps.android:android-maps-utils:0.6.2'
+    //implementation 'com.google.android.gms:play-services-maps:17.0.0'
     /////////////////////////////////////
     implementation 'com.github.MKergall:osmbonuspack:6.6.0'
     implementation 'org.osmdroid:osmdroid-android:6.1.5'
@@ -56,4 +56,6 @@ dependencies {
     implementation group: 'io.takari', name: 'jbdiff', version: '1.0.1'
     //implementation group: 'commons-io', name: 'commons-io', version: '2.6'
 
+    //chirp
+    implementation 'io.chirp:chirpsdk:3.6.1'
 }

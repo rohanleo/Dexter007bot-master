@@ -2,7 +2,7 @@ package com.example.dexter007bot.SummaryVector;
 
 import android.os.Environment;
 
-import com.example.dexter007bot.Connection.Ip;
+import com.example.dexter007bot.Ip;
 import com.example.dexter007bot.LoginActivity;
 import com.google.gson.Gson;
 
@@ -26,7 +26,7 @@ public class ReceivedDetailsLog implements Runnable {
 
 
     public ReceivedDetailsLog(){
-        this.PEER_ID = Ip.ipadd();
+        this.PEER_ID = new String(Ip.ipadd());
         this.userName = LoginActivity.userName;
         this.DATABASE_PATH =String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/ReceivedDetails_Log.json"));
         this.fileTable=readDB(DATABASE_PATH);

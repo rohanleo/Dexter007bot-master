@@ -17,9 +17,9 @@ import java.util.regex.Pattern;
 public class ChatUtils {
 
     //get message for the extended data kml
-    public static String getExtendedDataFormatName(String text, String version, String type, Location location){
+    public static String getExtendedDataFormatName(String text, String version, Location location){
         String latlon = location.getLatitude() + "_" + location.getLongitude();
-        return getTimeStamp()+"-"+version+"-"+type+"-"+text+"-"+latlon;
+        return getTimeStamp()+"-"+version+"-"+text+"-"+latlon;
     }
 
     public static String getTimeStamp(){

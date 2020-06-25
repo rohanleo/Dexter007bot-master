@@ -1,4 +1,4 @@
-package com.example.dexter007bot.Connection;
+package com.example.dexter007bot.P2PConnect;
 
 import android.os.Environment;
 

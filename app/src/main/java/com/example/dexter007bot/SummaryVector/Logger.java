@@ -32,7 +32,7 @@ public class Logger {
         String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
         String logmsg= String.format("%s, %s", timeStamp, logMessage);
         try {
-            System.out.println("LOG:" + logmsg);
+            //System.out.println("LOG:" + logmsg);
             logFileWriter.write(logmsg + "\n");
             logFileWriter.flush();
         }
@@ -43,6 +43,6 @@ public class Logger {
     }
     public static void d(String a, String b){
         String c = a+b;
-        System.out.println(c);
+        //System.out.println(c);
     }
 }

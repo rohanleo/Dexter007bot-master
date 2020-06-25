@@ -4,7 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
-import com.example.dexter007bot.Connection.Ip;
+import com.example.dexter007bot.Ip;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -41,7 +41,7 @@ public class ClientTask extends AsyncTask<Void,Void,Void> {
             socket.bind(null);
             socket.connect((new InetSocketAddress(host, port)), 500);
 
-            String ip = Ip.ipadd();
+            String ip = new String(Ip.ipadd());
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(socket.getOutputStream());
             PrintWriter printWriter = new PrintWriter(outputStreamWriter);
             outputStreamWriter.write(ip);
