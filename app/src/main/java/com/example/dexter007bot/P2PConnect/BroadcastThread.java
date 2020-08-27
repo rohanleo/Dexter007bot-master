@@ -1,10 +1,13 @@
 package com.example.dexter007bot.P2PConnect;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
+import static com.example.dexter007bot.MainActivity.TAG;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class BroadcastThread implements Runnable {
@@ -30,6 +33,7 @@ public class BroadcastThread implements Runnable {
             b = data.getBytes(UTF_8);
             info = new DatagramPacket(b,b.length, InetAddress.getByName(IP),PORT);
             socket.send(info);
+            Log.d(TAG, "IP Sent to host"+IP);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

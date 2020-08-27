@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.example.dexter007bot.Service.P2PConnectService;
+import com.example.dexter007bot.Service.P2PNearbyService;
 
 import java.util.List;
 
@@ -15,14 +16,15 @@ import static com.example.dexter007bot.LoginActivity.logger;
 
 public class SearchingDB implements Runnable {
     private Handler handler;
-    private P2PConnectService connectService;
+    //private P2PConnectService connectService;
+    private P2PNearbyService connectService;
     private int timerDBSearch = 5000;
     public int minDBLevel = 2;
     private String connectedSSID;
     public final static String DISARM_DB_TAG = "Searching_Disarm_DB";
     public static String dbAPName = "DisarmHotspotDB";
 
-    public SearchingDB(Handler handler, P2PConnectService connectService) {
+    public SearchingDB(Handler handler, P2PNearbyService connectService) {
         this.handler = handler;
         this.connectService = connectService;
         this.handler.post(this);
@@ -30,10 +32,10 @@ public class SearchingDB implements Runnable {
 
     @Override
     public void run() {
-        connectedSSID = P2PConnectService.wifiManager.getConnectionInfo().getSSID().replace("\"", "");
+        connectedSSID = P2PNearbyService.wifiManager.getConnectionInfo().getSSID().replace("\"", "");
         if (connectedSSID.contains(dbAPName)) {
             Log.d(DISARM_DB_TAG, "Connected to DisarmDB");
-            List<ScanResult> allScanResults = P2PConnectService.wifiManager.getScanResults();
+            List<ScanResult> allScanResults = P2PNearbyService.wifiManager.getScanResults();
             int level = findDBSignalLevel(allScanResults);
             if (level < minDBLevel)
                 checkForDB();
@@ -49,20 +51,20 @@ public class SearchingDB implements Runnable {
             }
             checkForDB();
         }
-        P2PConnectService.wifiManager.startScan();
+        P2PNearbyService.wifiManager.startScan();
         handler.postDelayed(this, timerDBSearch);
     }
 
     private void checkForDB() {
         Log.d(DISARM_DB_TAG, "Searching DB");
-        List<ScanResult> allScanResults = P2PConnectService.wifiManager.getScanResults();
+        List<ScanResult> allScanResults = P2PNearbyService.wifiManager.getScanResults();
         if (allScanResults.toString().contains(dbAPName)) {
             logger.write("DB found");
             // compare signal level
             int level = findDBSignalLevel(allScanResults);
             if (level < minDBLevel) {
                 if (connectedSSID.contains("DB")) {
-                    if (P2PConnectService.wifiManager.disconnect()) {
+                    if (P2PNearbyService.wifiManager.disconnect()) {
                         logger.write("DB Disconnected as Level = " + level);
                         Log.d(DISARM_DB_TAG, "DB Disconnected as Level = " + level);
                     }
@@ -82,14 +84,14 @@ public class SearchingDB implements Runnable {
                 wc.preSharedKey = "\"" + pass + "\"";
                 wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
                 //Log.v(DCService.TAG4, "Connected to DB");
-                if (P2PConnectService.wifiManager.pingSupplicant()) {
-                    if (!P2PConnectService.wifiManager.getConnectionInfo().getSSID().contains("DB")) {
-                        P2PConnectService.wifiManager.disconnect();
-                        P2PConnectService.wifiManager.disableNetwork(P2PConnectService.wifiManager.getConnectionInfo().getNetworkId());
+                if (P2PNearbyService.wifiManager.pingSupplicant()) {
+                    if (!P2PNearbyService.wifiManager.getConnectionInfo().getSSID().contains("DB")) {
+                        P2PNearbyService.wifiManager.disconnect();
+                        P2PNearbyService.wifiManager.disableNetwork(P2PNearbyService.wifiManager.getConnectionInfo().getNetworkId());
                     }
                 }
-                int res = P2PConnectService.wifiManager.addNetwork(wc);
-                boolean b = P2PConnectService.wifiManager.enableNetwork(res, true);
+                int res = P2PNearbyService.wifiManager.addNetwork(wc);
+                boolean b = P2PNearbyService.wifiManager.enableNetwork(res, true);
                 Log.v("DB:", "Res:" + res + ",b:" + b);
                 if (res != -1) {
                     Log.d(DISARM_DB_TAG, " DB Connected");

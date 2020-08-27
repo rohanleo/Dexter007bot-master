@@ -39,7 +39,7 @@ dependencies {
     //implementation 'com.google.android.gms:play-services-maps:17.0.0'
     /////////////////////////////////////
     implementation 'com.github.MKergall:osmbonuspack:6.6.0'
-    implementation 'org.osmdroid:osmdroid-android:6.1.5'
+    implementation 'org.osmdroid:osmdroid-android:6.1.8'
     ////////////////////////////////////
 
     //Image View
@@ -50,7 +50,7 @@ dependencies {
     implementation 'com.github.ozodrukh:CircularReveal:2.0.1@aar'
 
     //Material Dialog
-    implementation 'com.github.javiersantos:MaterialStyledDialogs:2.1'
+    implementation 'com.github.javiersantos:MaterialStyledDialogs:2.2'
 
     //Diff
     implementation group: 'io.takari', name: 'jbdiff', version: '1.0.1'
@@ -58,4 +58,7 @@ dependencies {
 
     //chirp
     implementation 'io.chirp:chirpsdk:3.6.1'
+
+    //Nearby
+    implementation 'com.google.android.gms:play-services-nearby:17.0.0'
 }
