@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -30,14 +31,18 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -74,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     FloatingActionButton btnSend;
     private static EditText edtTextMsg;
     public static String TAG = "MainActivity";
+    private SharedPreferences preferences;
 
     private Bot bot;
     public static Chat chat;
@@ -123,6 +129,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("Dextor Bot");
+        preferences = getApplicationContext().getSharedPreferences("user_credentials",MODE_PRIVATE);
 
         initialize();
         logger.write("Application Started : "+LoginActivity.userName);
@@ -190,6 +200,46 @@ public class MainActivity extends AppCompatActivity {
         if (lastLocation != null) {
             currentLocation = lastLocation;
         }
+        if (preferences.getString("user_type","normal").matches("normal")){
+            startService();
+        } else {
+            startAuthService();
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private void startAuthService() {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isXOB = pref.getBoolean("xob_switch", false);
+        MyTetheringActivity tetheringActivity = new MyTetheringActivity(MainActivity.this);
+        if (isXOB){
+            if (toggleXOB(tetheringActivity))
+                Log.d("XOB","xob started");
+        } else {
+            if (tetheringActivity.isTetherActive())
+                tetheringActivity.stopTethering();
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private boolean toggleXOB(MyTetheringActivity tetheringActivity) {
+        //tetheringActivity.configureHotspot("DisarmHotspotDB","password123");
+        boolean isStarted = tetheringActivity.startTethering();
+        if (isStarted){
+            Log.e(TAG,"Hotspot Started");
+            AlertDialog ad = new AlertDialog.Builder(this)
+                    .setTitle("Alert!!")
+                    .setMessage("WifiHotspot Credentials should be as:-\nSSID:- DisarmHotspotDB\npassword:- password123")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    })
+                    .create();
+            ad.show();
+        }
+        return false;
     }
 
     private void onclickListener() {
@@ -248,7 +298,38 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
             }
         });
-        startService();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_settings) {
+            if (preferences.getString("user_type","normal").matches("authorised")){
+                Intent ii = new Intent(MainActivity.this, SettingActivity.class);
+                startActivity(ii);
+                finish();
+            } else {
+                AlertDialog ad = new AlertDialog.Builder(this)
+                        .setTitle("Alert!!")
+                        .setMessage("Only Authorised Personals have permission to change the settings")
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                            }
+                        })
+                        .create();
+                ad.show();
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -272,7 +353,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindAllService();
+        if (preferences.getString("user_type","normal").matches("normal")){
+            unbindAllService();
+        }
     }
 
     /**

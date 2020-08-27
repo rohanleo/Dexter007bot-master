@@ -150,8 +150,6 @@ public class client implements Runnable{
             File out = new File(saveDir);
 
             new Thread(new Download(fileURL, out,IP)).start();
-
-
         }
 
 

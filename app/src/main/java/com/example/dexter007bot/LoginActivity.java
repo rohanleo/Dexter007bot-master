@@ -2,6 +2,7 @@ package com.example.dexter007bot;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -12,9 +13,13 @@ import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -40,6 +45,10 @@ public class LoginActivity extends AppCompatActivity {
     public static String userName;
     private EditText email;
     private EditText phone;
+    private EditText passKey;
+    private LinearLayout auth;
+    private RadioGroup radioGroup;
+    private RadioButton radioButton;
 
     private Button submit;
 
@@ -121,7 +130,7 @@ public class LoginActivity extends AppCompatActivity {
 
         AIMLProcessor.extension= new sample();
 
-        sp = getSharedPreferences("First log",0);
+        sp = getSharedPreferences("user_credentials",MODE_PRIVATE);
         if(sp.getString("First login","").toString().equals("no")){
             //Not first time login
             userEmail = sp.getString("email","");
@@ -139,28 +148,82 @@ public class LoginActivity extends AppCompatActivity {
             email = findViewById(R.id.emailText);
             phone = findViewById(R.id.phoneText);
             submit = findViewById(R.id.submitButton);
+            passKey = findViewById(R.id.passKey);
+            auth = findViewById(R.id.auth);
+            radioGroup = findViewById(R.id.radioGroup);
+            radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                    switch (radioGroup.getCheckedRadioButtonId()){
+                        case R.id.normalUser:
+                            auth.setVisibility(View.GONE);
+                            break;
+
+                        case R.id.authUser:
+                            auth.setVisibility(View.VISIBLE);
+                            break;
+                    }
+                }
+            });
             submit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     //check if user details are filled or not
                     if(email.getText().toString().matches("") || phone.getText().toString().matches("")){
-                        Toast.makeText(LoginActivity.this,"Please fill the details",Toast.LENGTH_LONG).show();
+                        AlertDialog ad = new AlertDialog.Builder(LoginActivity.this)
+                                .setMessage("Please fill the details")
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        dialogInterface.dismiss();
+                                    }
+                                }).create();
+                        ad.show();
                     }else{
-                        //Store the details of user in sharedpreferences
-                        SharedPreferences.Editor editor = sp.edit();
-                        editor.putString("First login","no");
-                        editor.putString("email", String.valueOf(email.getText()));
-                        editor.putString("phone", String.valueOf(phone.getText()));
-                        editor.commit();
-
-                        userEmail = sp.getString("email","");
-                        userPhoneNum = sp.getString("phone","");
+                        userEmail = String.valueOf(email.getText());
+                        userPhoneNum = String.valueOf(phone.getText());
                         userName = getSource(userEmail) + "_" +userPhoneNum;
-                        logger = new Logger();
-                        //Move to main activity
-                        Intent i = new Intent(LoginActivity.this,MainActivity.class);
-                        startActivity(i);
-                        finish();
+                        SharedPreferences.Editor editor = sp.edit();
+                        switch (radioGroup.getCheckedRadioButtonId()){
+                            case R.id.normalUser:
+                                editor.putString("First login","no");
+                                editor.putString("email", String.valueOf(email.getText()));
+                                editor.putString("phone", String.valueOf(phone.getText()));
+                                editor.putString("user_type","normal");
+                                editor.commit();
+                                logger = new Logger();
+                                //Move to main activity
+                                Intent i = new Intent(LoginActivity.this,MainActivity.class);
+                                startActivity(i);
+                                finish();
+                                break;
+
+                            case R.id.authUser:
+                                if (passKey.getText().toString().matches("password123")){
+                                    editor.putString("First login","no");
+                                    editor.putString("email", String.valueOf(email.getText()));
+                                    editor.putString("phone", String.valueOf(phone.getText()));
+                                    editor.putString("user_type","authorised");
+                                    editor.commit();
+
+                                    logger = new Logger();
+                                    //Move to main activity
+                                    Intent ii = new Intent(LoginActivity.this,WriteSettingActivity.class);
+                                    startActivity(ii);
+                                    finish();
+                                } else {
+                                    AlertDialog ad = new AlertDialog.Builder(LoginActivity.this)
+                                            .setMessage("Please enter the Authorised Key")
+                                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialogInterface, int i) {
+                                                    dialogInterface.dismiss();
+                                                }
+                                            }).create();
+                                    ad.show();
+                                }
+                                break;
+                        }
 
                     }
                 }
