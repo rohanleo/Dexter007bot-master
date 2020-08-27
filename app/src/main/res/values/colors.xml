@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
+    <color name="colorPrimary">#1abc9c</color>
+    <color name="colorPrimaryDark">#16a085</color>
+    <color name="colorAccent">#e74c3c</color>
+
+    <color name="white">#ffffff</color>
     <color name="fbutton_color_green_sea">#16a085</color>
     <color name="gray_light">#e8e8e8</color>
 </resources>
