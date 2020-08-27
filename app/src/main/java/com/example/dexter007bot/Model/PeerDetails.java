@@ -11,7 +11,7 @@ public class PeerDetails {
     private int connectedPeers;
 
     public PeerDetails() {
-        groupOwner = true;
+        groupOwner = false;
     }
 
     public PeerDetails(String wifiName, String password) {

@@ -23,6 +23,7 @@ import android.os.Environment;
 import com.example.dexter007bot.Chats.ChatUtils;
 import com.example.dexter007bot.Maps.MapActivity;
 import com.example.dexter007bot.Service.P2PConnectService;
+import com.example.dexter007bot.Service.P2PNearbyService;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
 import com.github.javiersantos.materialstyleddialogs.enums.Duration;
 import com.github.javiersantos.materialstyleddialogs.enums.Style;
@@ -120,7 +121,8 @@ public class MainActivity extends AppCompatActivity {
     private static int total;
 
     //connection
-    public static P2PConnectService myService;
+    //public static P2PConnectService myService;
+    public static P2PNearbyService myService;
     public static boolean syncServiceBound = false;
     public static boolean myServiceBound = false;
 
@@ -129,13 +131,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //startService();
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Dextor Bot");
         preferences = getApplicationContext().getSharedPreferences("user_credentials",MODE_PRIVATE);
 
         initialize();
-        logger.write("Application Started : "+LoginActivity.userName);
+        //logger.write("Application Started : "+LoginActivity.userName);
 
         adapter = new ChatMessageAdapter(this,new ArrayList<ChatMessage>());
         listView.setAdapter(adapter);
@@ -824,7 +827,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void startService(){
-        final Intent p2pServiceIntent = new Intent(getApplicationContext(), P2PConnectService.class);
+        final Intent p2pServiceIntent = new Intent(getApplicationContext(), P2PNearbyService.class);
         bindService(p2pServiceIntent, myServiceConnection, Context.BIND_AUTO_CREATE);
         startService(p2pServiceIntent);
         if(!locationServicesEnabled())
@@ -832,7 +835,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void unbindAllService(){
-        final Intent myServiceIntent = new Intent(getApplicationContext(),P2PConnectService.class);
+        final Intent myServiceIntent = new Intent(getApplicationContext(),P2PNearbyService.class);
         if(myServiceBound){
             unbindService(myServiceConnection);
         }
@@ -845,7 +848,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
-            P2PConnectService.P2PConnectServiceBinder binder = (P2PConnectService.P2PConnectServiceBinder) service;
+            P2PNearbyService.P2PNearbyServiceBinder binder = (P2PNearbyService.P2PNearbyServiceBinder) service;
             myService = binder.getService();
             myServiceBound = true;
         }

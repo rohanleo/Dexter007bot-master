@@ -11,6 +11,7 @@ import android.util.Log;
 
 import com.example.dexter007bot.Model.PeerDetails;
 import com.example.dexter007bot.Service.P2PConnectService;
+import com.example.dexter007bot.Service.P2PNearbyService;
 import com.example.dexter007bot.SummaryVector.Logger;
 
 import java.util.List;
@@ -18,9 +19,12 @@ import java.util.Random;
 
 import static com.example.dexter007bot.LoginActivity.logger;
 
+
+//Signal level problem
 public class P2pConnect implements Runnable {
     private Handler handler;
-    private P2PConnectService connectService;
+    //private P2PConnectService connectService;
+    private P2PNearbyService connectService;
     public static int DEVICE_STATUS;
     private static int P2P_CONNECT_PHASE;
     public static final String P2P_CONNECT_TAG = "p2pConnect";
@@ -58,7 +62,7 @@ public class P2pConnect implements Runnable {
     public static final String P2P_LOGGER_FILENAME = "P2pConnect_log";
 
 
-    public P2pConnect(Handler handler, P2PConnectService connectService, int status) {
+    public P2pConnect(Handler handler, P2PNearbyService connectService, int status) {
         this.handler = handler;
         this.connectService = connectService;
         DEVICE_STATUS = status;
@@ -72,7 +76,7 @@ public class P2pConnect implements Runnable {
     @Override
     public void run() {
         int delay = PHASE_DELAY;
-        WifiInfo wifiInfo = P2PConnectService.wifiManager.getConnectionInfo();
+        WifiInfo wifiInfo = P2PNearbyService.wifiManager.getConnectionInfo();
         String ssidName = wifiInfo.getSSID().replace("\"", "");
         boolean connectedToGO = false;
         boolean connectedToDB = false;
@@ -167,7 +171,7 @@ public class P2pConnect implements Runnable {
                     }
                 }
                 //condition to switch to Random Switching Phase
-                if (step > CONNECTION_PHASE_STEP) {
+                if (step > CONNECTION_PHASE_STEP && !connectService.myPeerDetails.isGroupOwner()) {
                     initializeSwitchingPhase();
                 }
                 step++;
@@ -196,7 +200,7 @@ public class P2pConnect implements Runnable {
             Log.d(P2P_CONNECT_TAG, "Connected To GO:" + ssidName);
             logger.write("Connected To GO:" + ssidName);
         } else {
-            P2PConnectService.wifiManager.disconnect();
+            P2PNearbyService.wifiManager.disconnect();
             logger.write("GO Disconnected as Level = " + findDBSignalLevel(ssidName));
             Log.d(P2P_CONNECT_TAG, "GO Disconnected as Level = " + findDBSignalLevel(ssidName));
         }
@@ -265,7 +269,7 @@ public class P2pConnect implements Runnable {
     }
 
     public int findDBSignalLevel(String wifiName) {
-        for (ScanResult scanResult : P2PConnectService.wifiScanList) {
+        for (ScanResult scanResult : P2PNearbyService.wifiScanList) {
             if (scanResult.SSID.contains(wifiName)) {
                 int level = WifiManager.calculateSignalLevel(scanResult.level, 5);
                 return level;

@@ -20,10 +20,10 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
-import com.example.dexter007bot.P2PConnect.client;
 import com.example.dexter007bot.Ip;
 import com.example.dexter007bot.MainActivity;
 import com.example.dexter007bot.Model.PeerDetails;
@@ -34,6 +34,7 @@ import com.example.dexter007bot.P2PConnect.P2pConnect;
 import com.example.dexter007bot.P2PConnect.SearchingDB;
 import com.example.dexter007bot.P2PConnect.WifiDirectBroadcastReceiver;
 import com.example.dexter007bot.P2PConnect.WifiScanReceiver;
+import com.example.dexter007bot.P2PConnect.client;
 import com.example.dexter007bot.R;
 
 import java.nio.charset.Charset;
@@ -119,7 +120,7 @@ public class P2PConnectService extends Service implements WifiP2pManager.Connect
     @Override
     public void onCreate() {
         super.onCreate();
-
+        //Toast.makeText(activity, "P2pConnectService Started..", Toast.LENGTH_SHORT).show();
         p2pDevicesList = new ArrayList<>();
         peerDetailsList = new ArrayList<>();
         myPeerDetails = new PeerDetails();
@@ -141,22 +142,22 @@ public class P2PConnectService extends Service implements WifiP2pManager.Connect
 
         //initialize battery logger
         batteryLoggerInit();
-    }
 
+    }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         //start p2pConnect
         if(p2pConnect == null){
             Log.d(P2pConnect.P2P_CONNECT_TAG, "p2pConnect Started...");
             p2pConnectHandler = new Handler();
-            p2pConnect = new P2pConnect(p2pConnectHandler, this, WifiP2pDevice.UNAVAILABLE);
+            //p2pConnect = new P2pConnect(p2pConnectHandler, this, WifiP2pDevice.UNAVAILABLE);
         }
 
         //start searchingDisarmDB
         if (searchingDB == null) {
             Log.d(SearchingDB.DISARM_DB_TAG, "Searching DisarmDB Started...");
             searchingDisarmDBHandler = new Handler();
-            searchingDB = new SearchingDB(searchingDisarmDBHandler, this);
+            //searchingDB = new SearchingDB(searchingDisarmDBHandler, this);
         }
 
         //handler to update list adapter and ui views
@@ -201,7 +202,7 @@ public class P2PConnectService extends Service implements WifiP2pManager.Connect
 
         if (wifiP2pInfo.isGroupOwner) {
             myPeerDetails.setGroupOwner(true);
-            new Thread(new ListenThread()).start();
+            //new Thread(new ListenThread()).start();
         } else {
             myPeerDetails.setGroupOwner(false);
             myPeerDetails.setWifiName("");
@@ -217,7 +218,7 @@ public class P2PConnectService extends Service implements WifiP2pManager.Connect
 
     @Override
     public void onGroupInfoAvailable(WifiP2pGroup wifiP2pGroup) {
-        String groupName = "";
+    String groupName = "";
         try {
             String[] names = wifiP2pGroup.getNetworkName().split("-");
             groupName = names[names.length - 1];
@@ -296,129 +297,6 @@ public class P2PConnectService extends Service implements WifiP2pManager.Connect
         mChannel = mManager.initialize(this,getMainLooper(),null);
         mReceiver = new WifiDirectBroadcastReceiver(mManager, mChannel, activity, myPeerListListener);
         registerReceiver(mReceiver,mIntentFilter);
-    }
-
-    ConnectEventListener connectEventListener = new ConnectEventListener() {
-
-        @Override
-        public void onSending(byte[] data, int channel) {
-            /**
-             * onSending is called when a send event begins.
-             * The data argument contains the payload being sent.
-             */
-            sendingData = true;
-            String hexData = "null";
-            if (data != null) {
-                hexData = bytesToHex(data);
-            }
-            Log.d(CHIRP_TAG, "ConnectCallback: onSending: " + hexData + " on channel: " + channel);
-        }
-
-        @Override
-        public void onSent(byte[] data, int channel) {
-            /**
-             * onSent is called when a send event has completed.
-             * The data argument contains the payload that was sent.
-             */
-            String hexData = "null";
-            if (data != null) {
-                hexData = bytesToHex(data);
-            }
-            sendingData = false;
-            Log.d(CHIRP_TAG, "ConnectCallback: onSent: " + hexData + " on channel: " + channel);
-        }
-
-        @Override
-        public void onReceiving(int channel) {
-            /**
-             * onReceiving is called when a receive event begins.
-             * No data has yet been received.
-             */
-            receivingData = true;
-            Log.d(CHIRP_TAG, "ConnectCallback: onReceiving on channel: " + channel);
-        }
-
-        @Override
-        public void onReceived(byte[] data, int channel) {
-            /**
-             * onReceived is called when a receive event has completed.
-             * If the payload was decoded successfully, it is passed in data.
-             * Otherwise, data is null.
-             */
-            if (data != null) {
-                decodeFailed = 0;
-                String identifier = new String(data);
-                Log.d(CHIRP_TAG, "Received:" + identifier);
-                PeerDetails newPeer = PeerDetails.getPeerDetailsObject(identifier);
-                Log.d(CHIRP_TAG, "WifiName:" + newPeer.getWifiName());
-                if (isPeerDetailsAvailable(newPeer.getWifiName()) == -1) {
-                    peerDetailsList.add(newPeer);
-                }
-            } else {
-                decodeFailed++;
-                Log.d(CHIRP_TAG, "Decode failed:" + decodeFailed);
-                if (decodeFailed == DECODE_FAILED_THRESHOLD) {
-                    //if decode fails thrice in a row then restart chirp
-                    stopChirpSdk();
-                    chirpInit();
-                }
-            }
-            receivingData = false;
-        }
-
-        @Override
-        public void onStateChanged(int oldState, int newState) {
-            /**
-             * onStateChanged is called when the SDK changes state.
-             */
-            Log.v(CHIRP_TAG, "ConnectCallback: onStateChanged " + oldState + " -> " + newState);
-        }
-
-        @Override
-        public void onSystemVolumeChanged(int oldVolume, int newVolume) {
-            Log.v(CHIRP_TAG, "System volume has been changed, notify user to increase the volume when sending data");
-        }
-    };
-
-    private void chirpInit(){
-        //ultrasonic poly
-        chirpConnect = new ChirpConnect(this, getResources().getString(R.string.CHIRP_APP_KEY), getResources().getString(R.string.CHIRP_APP_SECRET));
-        ChirpError error = chirpConnect.setConfig(getResources().getString(R.string.CHIRP_APP_CONFIG));
-        if (error.getCode() == 0) {
-            Log.v("ChirpSDK: ", "Configured ChirpSDK");
-        } else {
-            Log.e("ChirpError: ", error.getMessage());
-        }
-        decodeFailed = 0;
-        chirpConnect.setListener(connectEventListener);
-        receivingData = false;
-        sendingData = false;
-        startChirpSdk();
-    }
-
-    public void startChirpSdk() {
-        ChirpError error = chirpConnect.start();
-        if (error.getCode() > 0) {
-            Log.d(CHIRP_TAG, "Error starting:" + error.getMessage());
-            return;
-        }
-        Log.d(CHIRP_TAG, "Chirp Started");
-    }
-
-    public void stopChirpSdk() {
-        ChirpError error = chirpConnect.stop();
-        if (error.getCode() > 0) {
-            Log.d(CHIRP_TAG, "Error stopping:" + error.getMessage());
-            return;
-        }
-        Log.d(CHIRP_TAG, "Chirp Stopped");
-    }
-
-    private void setMaxVolume() {
-        AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
-                audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
-                0);
     }
 
     private void batteryLoggerInit(){
@@ -660,5 +538,130 @@ public class P2PConnectService extends Service implements WifiP2pManager.Connect
             e.printStackTrace();
         }
         super.onDestroy();
+    }
+
+
+    //CHIRP
+    ConnectEventListener connectEventListener = new ConnectEventListener() {
+
+        @Override
+        public void onSending(byte[] data, int channel) {
+            /**
+             * onSending is called when a send event begins.
+             * The data argument contains the payload being sent.
+             */
+            sendingData = true;
+            String hexData = "null";
+            if (data != null) {
+                hexData = bytesToHex(data);
+            }
+            Log.d(CHIRP_TAG, "ConnectCallback: onSending: " + hexData + " on channel: " + channel);
+        }
+
+        @Override
+        public void onSent(byte[] data, int channel) {
+            /**
+             * onSent is called when a send event has completed.
+             * The data argument contains the payload that was sent.
+             */
+            String hexData = "null";
+            if (data != null) {
+                hexData = bytesToHex(data);
+            }
+            sendingData = false;
+            Log.d(CHIRP_TAG, "ConnectCallback: onSent: " + hexData + " on channel: " + channel);
+        }
+
+        @Override
+        public void onReceiving(int channel) {
+            /**
+             * onReceiving is called when a receive event begins.
+             * No data has yet been received.
+             */
+            receivingData = true;
+            Log.d(CHIRP_TAG, "ConnectCallback: onReceiving on channel: " + channel);
+        }
+
+        @Override
+        public void onReceived(byte[] data, int channel) {
+            /**
+             * onReceived is called when a receive event has completed.
+             * If the payload was decoded successfully, it is passed in data.
+             * Otherwise, data is null.
+             */
+            if (data != null) {
+                decodeFailed = 0;
+                String identifier = new String(data);
+                Log.d(CHIRP_TAG, "Received:" + identifier);
+                PeerDetails newPeer = PeerDetails.getPeerDetailsObject(identifier);
+                Log.d(CHIRP_TAG, "WifiName:" + newPeer.getWifiName());
+                if (isPeerDetailsAvailable(newPeer.getWifiName()) == -1) {
+                    peerDetailsList.add(newPeer);
+                }
+            } else {
+                decodeFailed++;
+                Log.d(CHIRP_TAG, "Decode failed:" + decodeFailed);
+                if (decodeFailed == DECODE_FAILED_THRESHOLD) {
+                    //if decode fails thrice in a row then restart chirp
+                    stopChirpSdk();
+                    chirpInit();
+                }
+            }
+            receivingData = false;
+        }
+
+        @Override
+        public void onStateChanged(int oldState, int newState) {
+            /**
+             * onStateChanged is called when the SDK changes state.
+             */
+            Log.v(CHIRP_TAG, "ConnectCallback: onStateChanged " + oldState + " -> " + newState);
+        }
+
+        @Override
+        public void onSystemVolumeChanged(int oldVolume, int newVolume) {
+            Log.v(CHIRP_TAG, "System volume has been changed, notify user to increase the volume when sending data");
+        }
+    };
+
+    private void chirpInit(){
+        //ultrasonic poly
+        chirpConnect = new ChirpConnect(this, getResources().getString(R.string.CHIRP_APP_KEY), getResources().getString(R.string.CHIRP_APP_SECRET));
+        ChirpError error = chirpConnect.setConfig(getResources().getString(R.string.CHIRP_APP_CONFIG));
+        if (error.getCode() == 0) {
+            Log.v("ChirpSDK: ", "Configured ChirpSDK");
+        } else {
+            Log.e("ChirpError: ", error.getMessage());
+        }
+        decodeFailed = 0;
+        chirpConnect.setListener(connectEventListener);
+        receivingData = false;
+        sendingData = false;
+        startChirpSdk();
+    }
+
+    public void startChirpSdk() {
+        ChirpError error = chirpConnect.start();
+        if (error.getCode() > 0) {
+            Log.d(CHIRP_TAG, "Error starting:" + error.getMessage());
+            return;
+        }
+        Log.d(CHIRP_TAG, "Chirp Started");
+    }
+
+    public void stopChirpSdk() {
+        ChirpError error = chirpConnect.stop();
+        if (error.getCode() > 0) {
+            Log.d(CHIRP_TAG, "Error stopping:" + error.getMessage());
+            return;
+        }
+        Log.d(CHIRP_TAG, "Chirp Stopped");
+    }
+
+    private void setMaxVolume() {
+        AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+                audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
+                0);
     }
 }

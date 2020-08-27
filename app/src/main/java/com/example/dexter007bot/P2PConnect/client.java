@@ -25,6 +25,7 @@ public class client implements Runnable{
 
         System.out.println("ip is "+ IP);
         String urlString = "http:/"+IP+":8080";
+        if(IP.equals("")) return;
         //Log.e("Client:- " , IP);
         Collection A = new ArrayList();
 
@@ -77,7 +78,7 @@ public class client implements Runnable{
         }
 
 
-        BufferedReader reader = null;
+        BufferedReader reader;
         try {
             reader = new BufferedReader(new InputStreamReader(url.openStream()));
         } catch (IOException e) {

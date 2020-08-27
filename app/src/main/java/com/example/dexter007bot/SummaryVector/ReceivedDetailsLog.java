@@ -5,6 +5,7 @@ import android.os.Environment;
 import com.example.dexter007bot.Ip;
 import com.example.dexter007bot.LoginActivity;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.apache.commons.io.FileUtils;
 
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ReceivedDetailsLog implements Runnable {
 
     public FileTable fileTable;
-    Gson gson = new Gson();
+    Gson gson = new GsonBuilder().setLenient().create();
     final String DATABASE_PATH;
     final String PEER_ID;
     final String userName;
