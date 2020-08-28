@@ -31,7 +31,7 @@ public class FileManager {
 
 
     public FileManager(String databaseName){
-        this.PEER_ID = new String(Ip.ipadd());
+        this.PEER_ID = Ip.getDottedDecimalIP(Ip.ipadd());
         this.userName = LoginActivity.userName;
         this.DATABASE_PATH =String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/.Log/" + databaseName));
         //Log.e("FileManager",DATABASE_PATH);
@@ -63,7 +63,7 @@ public class FileManager {
         //from json to object
         FileTable fileTable1 = new FileTable(PEER_ID,userName);
         fileTable1.fileMap = new ConcurrentHashMap<>();
-        try{
+        /*try{
             BufferedReader br = new BufferedReader(new FileReader(DB_path));
 
             //convert the json string back to object
@@ -83,7 +83,7 @@ public class FileManager {
                         "\nTypeOfFile: " + fileInfo.getTypeoffile()+
                         "\nDestinationReachStatus: " +fileInfo.getDestinationReachedStatus() +
                         "\nOrigin: " + fileInfo.getOrigin());
-            }*/
+            }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -93,7 +93,7 @@ public class FileManager {
             this.writeDB(fileTable1,DB_path);
             fileTable1 = new FileTable(this.PEER_ID,this.userName);
             fileTable1.fileMap = new ConcurrentHashMap<>();
-        }
+        }*/
         return fileTable1;
     }
 

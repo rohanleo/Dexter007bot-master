@@ -48,11 +48,11 @@ public class LoginActivity extends AppCompatActivity {
     private EditText passKey;
     private LinearLayout auth;
     private RadioGroup radioGroup;
-    private RadioButton radioButton;
 
     private Button submit;
 
     public static Logger logger;
+    private BasicFunctionHandler handler;
 
     public static final int MULTIPLE_PERMISSIONS = 15;
     private final String[] permissions = new String[]{
@@ -76,6 +76,7 @@ public class LoginActivity extends AppCompatActivity {
         //Asking Permissions
         while(!hasPermissions(this,permissions)){
             ActivityCompat.requestPermissions(this,permissions,MULTIPLE_PERMISSIONS);
+            //recreate();
         }
 
         //Adding directories
@@ -130,12 +131,12 @@ public class LoginActivity extends AppCompatActivity {
 
         AIMLProcessor.extension= new sample();
 
-        sp = getSharedPreferences("user_credentials",MODE_PRIVATE);
+        sp = getApplicationContext().getSharedPreferences("user_credentials",MODE_PRIVATE);
         if(sp.getString("First login","").toString().equals("no")){
             //Not first time login
             userEmail = sp.getString("email","");
             userPhoneNum = sp.getString("phone","");
-            userName = getSource(userEmail) + "_" +userPhoneNum;
+            userName = sp.getString("user_name","no_user");
             logger = new Logger();
 
             //Move to main activity
@@ -145,6 +146,7 @@ public class LoginActivity extends AppCompatActivity {
         }else{
             //first time login
             setContentView(R.layout.activity_login);
+            handler = new BasicFunctionHandler(this);
             email = findViewById(R.id.emailText);
             phone = findViewById(R.id.phoneText);
             submit = findViewById(R.id.submitButton);
@@ -170,61 +172,60 @@ public class LoginActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     //check if user details are filled or not
                     if(email.getText().toString().matches("") || phone.getText().toString().matches("")){
-                        AlertDialog ad = new AlertDialog.Builder(LoginActivity.this)
-                                .setMessage("Please fill the details")
-                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        dialogInterface.dismiss();
-                                    }
-                                }).create();
-                        ad.show();
+                        handler.showAlertDialog("","Please fill the details");
                     }else{
                         userEmail = String.valueOf(email.getText());
                         userPhoneNum = String.valueOf(phone.getText());
-                        userName = getSource(userEmail) + "_" +userPhoneNum;
-                        SharedPreferences.Editor editor = sp.edit();
-                        switch (radioGroup.getCheckedRadioButtonId()){
-                            case R.id.normalUser:
-                                editor.putString("First login","no");
-                                editor.putString("email", String.valueOf(email.getText()));
-                                editor.putString("phone", String.valueOf(phone.getText()));
-                                editor.putString("user_type","normal");
-                                editor.commit();
-                                logger = new Logger();
-                                //Move to main activity
-                                Intent i = new Intent(LoginActivity.this,MainActivity.class);
-                                startActivity(i);
-                                finish();
-                                break;
-
-                            case R.id.authUser:
-                                if (passKey.getText().toString().matches("password123")){
+                        if (!handler.isEmailValid(userEmail)){
+                            handler.showAlertDialog("","Please Enter a valid email");
+                        } else if (userPhoneNum.length() < 10){
+                            handler.showAlertDialog("","Please enter a valid Phone Number");
+                        } else{
+                            SharedPreferences.Editor editor = sp.edit();
+                            switch (radioGroup.getCheckedRadioButtonId()){
+                                case R.id.normalUser:
                                     editor.putString("First login","no");
                                     editor.putString("email", String.valueOf(email.getText()));
                                     editor.putString("phone", String.valueOf(phone.getText()));
-                                    editor.putString("user_type","authorised");
+                                    editor.putString("user_type","normal");
+                                    editor.putString("user_name",getSource(userEmail) + "_" +userPhoneNum);
                                     editor.commit();
-
                                     logger = new Logger();
                                     //Move to main activity
-                                    Intent ii = new Intent(LoginActivity.this,WriteSettingActivity.class);
-                                    startActivity(ii);
+                                    Intent i = new Intent(LoginActivity.this,MainActivity.class);
+                                    startActivity(i);
                                     finish();
-                                } else {
-                                    AlertDialog ad = new AlertDialog.Builder(LoginActivity.this)
-                                            .setMessage("Please enter the Authorised Key")
-                                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialogInterface, int i) {
-                                                    dialogInterface.dismiss();
-                                                }
-                                            }).create();
-                                    ad.show();
-                                }
-                                break;
-                        }
+                                    break;
 
+                                case R.id.authUser:
+                                    if (passKey.getText().toString().matches("password123")){
+                                        editor.putString("First login","no");
+                                        editor.putString("email", String.valueOf(email.getText()));
+                                        editor.putString("phone", String.valueOf(phone.getText()));
+                                        editor.putString("user_type","authorised");
+                                        editor.putString("user_name",getSource(userEmail) + "_" +userPhoneNum);
+                                        editor.putString("pass_key","password123");
+                                        editor.commit();
+
+                                        logger = new Logger();
+                                        //Move to main activity
+                                        Intent ii = new Intent(LoginActivity.this,WriteSettingActivity.class);
+                                        startActivity(ii);
+                                        finish();
+                                    } else {
+                                        AlertDialog ad = new AlertDialog.Builder(LoginActivity.this)
+                                                .setMessage("Please enter the Authorised Key")
+                                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                                        dialogInterface.dismiss();
+                                                    }
+                                                }).create();
+                                        ad.show();
+                                    }
+                                    break;
+                            }
+                        }
                     }
                 }
             });

@@ -1,6 +1,7 @@
 package com.example.dexter007bot.SummaryVector;
 
 import android.os.Environment;
+import android.util.Log;
 
 import com.example.dexter007bot.Ip;
 import com.example.dexter007bot.LoginActivity;
@@ -20,14 +21,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ReceivedDetailsLog implements Runnable {
 
     public FileTable fileTable;
-    Gson gson = new GsonBuilder().setLenient().create();
+    //Gson gson = new GsonBuilder().setLenient().create();
+    Gson gson = new Gson();
     final String DATABASE_PATH;
     final String PEER_ID;
     final String userName;
 
 
     public ReceivedDetailsLog(){
-        this.PEER_ID = new String(Ip.ipadd());
+        this.PEER_ID = Ip.getDottedDecimalIP(Ip.ipadd());
         this.userName = LoginActivity.userName;
         this.DATABASE_PATH =String.valueOf(Environment.getExternalStoragePublicDirectory("DextorBot/ReceivedDetails_Log.json"));
         this.fileTable=readDB(DATABASE_PATH);
@@ -38,7 +40,7 @@ public class ReceivedDetailsLog implements Runnable {
         addDB();
         removeDeletedFiles();
         writeDB(fileTable,DATABASE_PATH);
-        System.out.println("Work Done");
+        Log.e("ReceivedDetailsLog","File Successfully transferred");
     }
 
     /**
@@ -87,8 +89,8 @@ public class ReceivedDetailsLog implements Runnable {
 
             //convert the json string back to object
             fileTable1 = (FileTable)gson.fromJson(br, FileTable.class);
-            fileTable1.peerID = this.PEER_ID;
-            fileTable1.userName=this.userName;
+            //fileTable1.peerID = this.PEER_ID;
+            //fileTable1.userName=this.userName;
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();

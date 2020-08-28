@@ -100,7 +100,7 @@ public class P2pConnect implements Runnable {
             }
         } else if (connectedToDB || connectedToGO) {
             P2P_CONNECT_PHASE = CONNECTED_PHASE;
-            if (connectedToGO && !connectService.myPeerDetails.isGroupOwner()) {
+            if (connectedToGO) {
                 List<PeerDetails> groupOwnerList = connectService.peerDetailsList;
                 if (groupOwnerList.size() > 1) {
                     Log.d(P2P_CONNECT_TAG, "Searching Best GO");
@@ -275,7 +275,7 @@ public class P2pConnect implements Runnable {
                 return level;
             }
         }
-        return 0;
+        return 3;
     }
 
     public void stop() {

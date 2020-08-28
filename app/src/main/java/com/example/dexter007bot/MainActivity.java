@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -22,6 +23,7 @@ import android.os.Environment;
 
 import com.example.dexter007bot.Chats.ChatUtils;
 import com.example.dexter007bot.Maps.MapActivity;
+import com.example.dexter007bot.P2PConnect.ListenThread;
 import com.example.dexter007bot.Service.P2PConnectService;
 import com.example.dexter007bot.Service.P2PNearbyService;
 import com.github.javiersantos.materialstyleddialogs.MaterialStyledDialog;
@@ -67,6 +69,7 @@ import org.osmdroid.bonuspack.kml.KmlDocument;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -81,13 +84,14 @@ public class MainActivity extends AppCompatActivity {
     private static EditText edtTextMsg;
     public static String TAG = "MainActivity";
     private SharedPreferences preferences;
+    private static String userName;
 
     private Bot bot;
     public static Chat chat;
     public static ChatMessageAdapter adapter;
     public static ArrayList<String>al = new ArrayList<String>();
     FloatingActionButton btnAttach;
-    public FloatingActionButton btnWifi;
+    public static FloatingActionButton btnWifi;
 
     //layout
     LinearLayout atMap, atCamera, atVideo, atAudio, revealLayout;
@@ -166,9 +170,10 @@ public class MainActivity extends AppCompatActivity {
         atMap = findViewById(R.id.atMap);
         atVideo = findViewById(R.id.atVideo);
         atAudio = findViewById(R.id.atAudio);
+        userName = preferences.getString("user_name","no_user");
 
         //selfkml file
-        kmlName ="KML_" + LoginActivity.userName + ".kml";
+        kmlName ="KML_" + userName + ".kml";
         kmlFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/SelfKml/" + kmlName);
         kml = new KmlDocument();
         if(!kmlFile.exists()){
@@ -216,8 +221,18 @@ public class MainActivity extends AppCompatActivity {
         boolean isXOB = pref.getBoolean("xob_switch", false);
         MyTetheringActivity tetheringActivity = new MyTetheringActivity(MainActivity.this);
         if (isXOB){
-            if (toggleXOB(tetheringActivity))
-                Log.d("XOB","xob started");
+            if (tetheringActivity.isTetherActive()){
+                try {
+                    new ListenThread().start();
+                    Log.e("XOB","ListenerThread for XOB");
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
+                btnWifi.setBackgroundColor(Color.RED);
+            } else {
+                if (toggleXOB(tetheringActivity))
+                    Log.d("XOB","xob started");
+            }
         } else {
             if (tetheringActivity.isTetherActive())
                 tetheringActivity.stopTethering();
@@ -241,6 +256,13 @@ public class MainActivity extends AppCompatActivity {
                     })
                     .create();
             ad.show();
+            try {
+                new ListenThread().start();
+                Log.e("XOB","ListenerThread for XOB");
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            btnWifi.setBackgroundColor(Color.RED);
         }
         return false;
     }
@@ -294,11 +316,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 makeEffect(revealLayout,cx,cy);
                 RecordAudio();
-            }
-        });
-        btnWifi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
             }
         });
     }
@@ -570,7 +587,7 @@ public class MainActivity extends AppCompatActivity {
 
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         //image name and path
-        String fileName = "IMG" +  "_" + LoginActivity.userName +"_"+timeStamp + ".jpg";
+        String fileName = "IMG" +  "_" + userName +"_"+timeStamp + ".jpg";
         String path="DextorBot/DextorImage/Image/";
         File image = Environment.getExternalStoragePublicDirectory(path + fileName);
 
@@ -591,7 +608,7 @@ public class MainActivity extends AppCompatActivity {
         Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         //video name and path
-        String fileName = "VID" +  "_" + LoginActivity.userName+"_" +timeStamp +".mp4";
+        String fileName = "VID" +  "_" + userName+"_" +timeStamp +".mp4";
         String path = "DextorBot/DextorVideo/Video/";
         File video = Environment.getExternalStoragePublicDirectory(path + fileName);
 
@@ -637,7 +654,7 @@ public class MainActivity extends AppCompatActivity {
         String timeStamp=new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 
         //audio name and path
-        final String fileName ="AUD" + "_" +  LoginActivity.userName + timeStamp + "_" + ".mp3";
+        final String fileName ="AUD" + "_" +  userName + "_" + timeStamp + ".mp3";
         String path = "DextorBot/DextorAudio/Audio/";
         final String finalFilePath = Environment.getExternalStoragePublicDirectory(path + fileName).getAbsolutePath();
 
@@ -785,7 +802,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static String getLatestKey(){
-        String nextKey = LoginActivity.userName;
+        String nextKey = userName;
         String msg;
         while (kml.mKmlRoot.mExtendedData!=null && kml.mKmlRoot.mExtendedData.containsKey(nextKey)){
             msg = kml.mKmlRoot.getExtendedData(nextKey);

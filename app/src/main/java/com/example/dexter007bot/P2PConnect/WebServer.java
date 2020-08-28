@@ -1,5 +1,7 @@
 package com.example.dexter007bot.P2PConnect;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Environment;
 import android.util.Log;
 
@@ -17,11 +19,15 @@ import javax.activation.MimetypesFileTypeMap;
 
 import fi.iki.elonen.NanoHTTPD;
 
+import static android.content.Context.MODE_PRIVATE;
+
 public class WebServer extends NanoHTTPD {
 
-
-    public WebServer() {
+    private String userName;
+    public WebServer(Context context) {
         super(8080);
+        SharedPreferences preferences = context.getSharedPreferences("user_credentials",MODE_PRIVATE);
+        userName = preferences.getString("user_name","no_user");
     }
 
     @Override
@@ -123,22 +129,22 @@ public class WebServer extends NanoHTTPD {
             File f = null;
             try {
                 if(parameters.get("name").contains(".kml")){
-                    if(parameters.get("name").contains(LoginActivity.userName))
+                    if(parameters.get("name").contains(userName))
                         f = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/SelfKml/" + parameters.get("name"));
                     else
                         f = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + parameters.get("name"));
                 }else if(parameters.get("name").contains(".jpg")){
-                    if(parameters.get("name").contains(LoginActivity.userName))
+                    if(parameters.get("name").contains(userName))
                         f = Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/Image/" + parameters.get("name"));
                     else
                         f = Environment.getExternalStoragePublicDirectory("DextorBot/DextorImage/ReceivedImage/" + parameters.get("name"));
                 }else if(parameters.get("name").contains(".mp4")){
-                    if(parameters.get("name").contains(LoginActivity.userName))
+                    if(parameters.get("name").contains(userName))
                         f = Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/Video/" + parameters.get("name"));
                     else
                         f = Environment.getExternalStoragePublicDirectory("DextorBot/DextorVideo/ReceivedVideo/" + parameters.get("name"));
                 }else if(parameters.get("name").contains(".mp3")){
-                    if(parameters.get("name").contains(LoginActivity.userName))
+                    if(parameters.get("name").contains(userName))
                         f = Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/Audio/" + parameters.get("name"));
                     else
                         f = Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/ReceivedAudio/" + parameters.get("name"));

@@ -6,7 +6,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
@@ -23,6 +25,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -221,7 +224,7 @@ public class P2PNearbyService extends Service implements WifiP2pManager.GroupInf
         });
     }
     private void startServer(){
-        webServer = new WebServer();
+        webServer = new WebServer(getApplicationContext());
         try {
             webServer.start();
             Log.d(NEARBY_SERVICE_TAG,"Server of this device has started");
@@ -336,6 +339,7 @@ public class P2PNearbyService extends Service implements WifiP2pManager.GroupInf
                 } catch (SocketException e) {
                     e.printStackTrace();
                 }
+                MainActivity.btnWifi.setBackgroundColor(Color.GREEN);
             }
 
             @Override
@@ -364,6 +368,9 @@ public class P2PNearbyService extends Service implements WifiP2pManager.GroupInf
                             //listenThread.interrupt();
                         }
                     }
+                    int color= Color.BLUE;
+                    if(wifiManager.getConnectionInfo() == null) color= Color.GRAY;
+                    MainActivity.btnWifi.setBackgroundColor(color);
                 }
             });
         }

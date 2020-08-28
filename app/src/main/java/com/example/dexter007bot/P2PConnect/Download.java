@@ -92,7 +92,18 @@ public class Download implements Runnable{
                         if(!newOut.exists()){
                             FileUtils.copyFile(out,newOut);
                         }else {
-                            DiffUtils.createDiff(oldFile,out);
+                            KmlDocument recKml = new KmlDocument();
+                            recKml.parseKMLFile(out);
+                            int recVersion = Integer.parseInt(recKml.mKmlRoot.getExtendedData("total"));
+                            KmlDocument myKml = new KmlDocument();
+                            myKml.parseKMLFile(newOut);
+                            int myVersion = Integer.parseInt(myKml.mKmlRoot.getExtendedData("total"));
+                            if (recVersion > myVersion){
+                                FileUtils.forceDelete(newOut);
+                                FileUtils.copyFile(out,newOut);
+                            } else
+                                check = false;
+                            /*DiffUtils.createDiff(oldFile,out);
                             check =false;
                             File deltaList = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/.Diff");
                             File delta = null;
@@ -117,8 +128,7 @@ public class Download implements Runnable{
                                 FileUtils.forceDelete(newVersionCre);
                                 check =true;
                             }
-                            FileUtils.forceDelete(delta);
-
+                            FileUtils.forceDelete(delta);*/
                         }
 
                     } catch (IOException e) {
