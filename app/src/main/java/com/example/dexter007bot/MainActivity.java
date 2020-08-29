@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
@@ -228,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
                 } catch (SocketException e) {
                     e.printStackTrace();
                 }
-                btnWifi.setBackgroundColor(Color.RED);
+                btnWifi.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
             } else {
                 if (toggleXOB(tetheringActivity))
                     Log.d("XOB","xob started");
@@ -262,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (SocketException e) {
                 e.printStackTrace();
             }
-            btnWifi.setBackgroundColor(Color.RED);
+            btnWifi.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
         }
         return false;
     }

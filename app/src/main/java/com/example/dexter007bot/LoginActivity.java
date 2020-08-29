@@ -178,7 +178,7 @@ public class LoginActivity extends AppCompatActivity {
                         userPhoneNum = String.valueOf(phone.getText());
                         if (!handler.isEmailValid(userEmail)){
                             handler.showAlertDialog("","Please Enter a valid email");
-                        } else if (userPhoneNum.length() < 10){
+                        } else if (userPhoneNum.length() != 10){
                             handler.showAlertDialog("","Please enter a valid Phone Number");
                         } else{
                             SharedPreferences.Editor editor = sp.edit();

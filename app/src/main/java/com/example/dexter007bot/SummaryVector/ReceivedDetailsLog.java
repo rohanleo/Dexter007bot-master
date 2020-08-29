@@ -86,7 +86,6 @@ public class ReceivedDetailsLog implements Runnable {
         //logger.d("DEBUG", "FileManager reading from fileDB");
         try{
             BufferedReader br = new BufferedReader(new FileReader(DB_path));
-
             //convert the json string back to object
             fileTable1 = (FileTable)gson.fromJson(br, FileTable.class);
             //fileTable1.peerID = this.PEER_ID;

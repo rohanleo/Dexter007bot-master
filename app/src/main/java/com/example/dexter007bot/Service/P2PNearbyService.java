@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -339,7 +340,7 @@ public class P2PNearbyService extends Service implements WifiP2pManager.GroupInf
                 } catch (SocketException e) {
                     e.printStackTrace();
                 }
-                MainActivity.btnWifi.setBackgroundColor(Color.GREEN);
+                MainActivity.btnWifi.setBackgroundTintList(ColorStateList.valueOf(Color.BLUE));
             }
 
             @Override
@@ -368,9 +369,9 @@ public class P2PNearbyService extends Service implements WifiP2pManager.GroupInf
                             //listenThread.interrupt();
                         }
                     }
-                    int color= Color.BLUE;
+                    int color= Color.GREEN;
                     if(wifiManager.getConnectionInfo() == null) color= Color.GRAY;
-                    MainActivity.btnWifi.setBackgroundColor(color);
+                    MainActivity.btnWifi.setBackgroundTintList(ColorStateList.valueOf(color));
                 }
             });
         }

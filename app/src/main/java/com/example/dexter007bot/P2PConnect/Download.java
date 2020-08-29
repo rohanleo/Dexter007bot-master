@@ -1,6 +1,7 @@
 package com.example.dexter007bot.P2PConnect;
 
 import android.os.Environment;
+import android.util.Log;
 
 import com.example.dexter007bot.DiffUtils;
 import com.example.dexter007bot.LoginActivity;
@@ -67,11 +68,14 @@ public class Download implements Runnable{
             LoginActivity.logger.write(IP + "::"+filename+" :Downloaded- "+perecentdownloaded+"% ");
             bout.close();
             in.close();
+            Log.e("Download",out.getName());
             if(downloaded!=filesize){
                 FileManager fileManager = new FileManager(FilenameUtils.getBaseName(out.getName())+ ".json");
                 fileManager.updateFilesFromSubfolders(out,IP,filesize,perecentdownloaded);
                 fileManager.writeDB(fileManager.fileTable,fileManager.DATABASE_PATH);
+                Log.e("Download","check1");
             }else{
+                Log.e("Download","check2");
                 File newOut = null;
                 boolean check=true;
                 if(filename.startsWith("IMG")){
@@ -84,17 +88,17 @@ public class Download implements Runnable{
                     newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorAudio/ReceivedAudio/" + filename);
                     if(!newOut.exists())FileUtils.copyFile(out,newOut);
                 }else if(filename.startsWith("KML")){
-
-                    String filebasename = FilenameUtils.getBaseName(out.getName());
-                    File oldFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
+                    //String filebasename = FilenameUtils.getBaseName(out.getName());
+                    //File oldFile = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
                     newOut = Environment.getExternalStoragePublicDirectory("DextorBot/DextorKml/ReceiveKml/" + filename);
                     try {
+                        KmlDocument recKml = new KmlDocument();
+                        recKml.parseKMLFile(out);
+                        Log.e("Download",out.getName() + " " + recKml.mKmlRoot.getExtendedData("total"));
+                        int recVersion = Integer.parseInt(recKml.mKmlRoot.getExtendedData("total"));
                         if(!newOut.exists()){
                             FileUtils.copyFile(out,newOut);
                         }else {
-                            KmlDocument recKml = new KmlDocument();
-                            recKml.parseKMLFile(out);
-                            int recVersion = Integer.parseInt(recKml.mKmlRoot.getExtendedData("total"));
                             KmlDocument myKml = new KmlDocument();
                             myKml.parseKMLFile(newOut);
                             int myVersion = Integer.parseInt(myKml.mKmlRoot.getExtendedData("total"));
